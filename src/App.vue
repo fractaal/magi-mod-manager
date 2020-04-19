@@ -8,9 +8,10 @@
           <p style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
         </span>
         <router-link to="/"><button class="input">Your Mods</button></router-link>
-        <form v-on:submit.prevent="modSearch">
+        <form v-on:submit.prevent="modSearch" style="position: relative;">
           <input v-model="modSearchTerm" class="input" type="text" size="50" placeholder="Search...">
           <input class="searchButton" type="submit" hidden>
+          <i class="fa fa-search" style="position:absolute; top: 12px; right: 12px;"></i>
         </form>
       </div>
       <div class="topBarColor">
@@ -21,21 +22,34 @@
         </transition>
       </div>
       <div class="jobViewColor">
-        Hi
+        <h2>Job Queue</h2>
+        <div style="display: grid; grid-template-columns: 1fr; overflow-y: auto; max-height: 87vh;">
+          <transition-group name="fade">
+            <div v-for="job in jobQueue" :key="job.key" class="jobCard" :class="[(job.operation == 'Complete' && job.progress == 1) ? 'success' : ''] + [(job.operation == 'Failed' && job.progress == 1) ? 'failed' : '']">
+              <h2>{{job.name}}</h2>
+              <p>{{job.file_name}}</p>
+              <div class="progress">
+                <span :style="{width: job.progress * 100 + '%'}"></span>
+              </div>
+              <p>{{job.operation}} - {{Math.round(job.progress * 100) + '%'}} - {{job.auxiliary}}</p>
+              <p>{{job.reason}}</p>
+            </div>
+          </transition-group>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-/*eslint no-unused-vars:1*/
-
+/* eslint-disable */
 const Curseforge = require('mc-curseforge-api') // for searching and other important functions
 const fs = require('fs') // filesystem read / write 
 const path = require('path') // file extension things 
 const { remote } = require('electron') // dialogs and stuff
+const size = require('filesize').partial({standard: "iec"}) // Filesize formatting
 
-const AppPath = remote.app.getAppPath()
+const AppPath = remote.app.getPath('userData')
 
 console.log(AppPath)
 
@@ -47,6 +61,8 @@ const configTemplate = {
     version: "1.12.2",
   }
 }
+
+console.log(__dirname)
 
 export default {
   data() {
@@ -62,11 +78,13 @@ export default {
       modSearchTerm: "",
       modSearchResults: {},
       modDetails: {},
-      jobQueue: [],
+      jobQueue: [
+
+      ],
     }
   },
 
-  mounted() {
+  created() { 
     // View mod details event
     this.$on('viewModDetails', (pickedMod) => {
       console.log(pickedMod)
@@ -74,8 +92,86 @@ export default {
       this.$router.push('/modDetails');
     });
 
-    // Job manager event loop
-    
+    // Start download event
+    this.$on('startDownload', (pickedMod) => {
+      this.addToJobQueue(pickedMod)
+    });
+
+    let index = 0; // Job manager index
+
+    // Job Manager Loop
+    setInterval(() => {
+      console.log("Current job queue index is " + index);
+      
+      /*
+      if (this.jobQueue.length == 0) { return } // Don't start if job queue index is 0
+      if (index > this.jobQueue.length) { index = 0; return } // Reset index to 0 if the index is larger than the queue
+      if (!this.jobQueue[index].lock && this.jobQueue[index].progress != 1) {
+      */
+
+
+        this.jobQueue[index].lock = true // Don't work on it again if you're already downloading it
+        setImmediate(() => {
+          let job = this.jobQueue[index];
+
+          let lastTime = Date.now()
+          let lastRecieved = 0
+
+          let filesize = 0;
+
+          function update(meta) { // This is called each time the downloader module gets a new chunk of data
+            job.operation = "Downloading"
+            job.progress = meta.recieved / meta.totalSize
+            job.auxiliary = (size(meta.recieved) + ' of ' + size(meta.totalSize))
+
+            lastRecieved = meta.recieved
+            lastTime = Date.now()
+
+            filesize = meta.totalSize
+          }
+
+          // Grab the mod file
+          job.mod.getFiles({newest_only: 1, mc_version: this.config.activeProfile.version}).then((files) => {
+            let chosen = files[0]
+            
+            console.log(chosen);
+
+            job.file_name = chosen.file_name; // Show the file name
+
+            // Figure out any dependencies it might have
+            for (let dependency in chosen.mod_dependencies) {
+              Curseforge.getMods({mod_key: chosen.mod_dependencies[dependency]}).then((mods) => {
+                this.addToJobQueue(mods[0], "Needed by " + job.name)
+              });
+            }
+
+            // Download the mod
+            chosen.download(AppPath + "/Mod.jar", {
+              override: true,
+              auto_check: false,
+            }, 
+            update).then(() => {
+              job.operation = "Complete"
+              job.auxiliary = size(filesize)
+              job.progress = 1
+            }).catch(err => {
+              job.progress = 1
+              job.auxiliary = err
+              job.operation = "Failed"
+            });
+          })
+          
+        });
+
+      /*
+      } else if (this.jobQueue[index].progress == 1) {
+        console.log("Weeee")
+        index++; 
+      }
+      */
+
+    }, 1000)
+
   },
 
   methods: {
@@ -93,8 +189,18 @@ export default {
       });
     },
 
-    addToJobQueue() {
-
+    addToJobQueue(mod, reason) {
+      this.jobQueue.push({
+        mod,
+        progress: 0,
+        operation: "Queued",
+        name: mod.name,
+        file_name: "...",
+        auxiliary: mod.file_size,
+        reason: reason || "User initiated",
+        key: Date.now(),
+        lock: false,
+      });
     }
   }
 }
@@ -104,137 +210,7 @@ export default {
 <style>
 
 @import url('./css/fonts.css');
-
-* {
-  padding: 0;
-  margin: 0;
-  font-family: 'Quicksand'
-}
-
-.card {
-  background-color: #8CB698;
-  color: #EBF6F1;
-
-  margin: 1em 5em 1em 5em;
-  padding-top: 3em;
-  padding-bottom: 3em;
-  padding-left: 3em;
-
-  border-radius: 30px;
-}
-
-.animate-hover {
-  transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-}
-
-.animate-hover:hover {
-  padding-left: 30px;
-  filter: saturate(200%);
-  cursor: pointer;
-}
-
-.card-padding {
-  margin: 1em 5em 1em 5em;
-  padding-top: 3em;
-  padding-bottom: 3em;
-  padding-left: 3em;
-}
-
-.searchButton {
-  padding: .75em;
-  margin-left: 20px;
-  border-radius: 10px;
-  background-color: #F69EA1;
-  border: 0px;
-  font-size: 1em;
-}
-
-.input {
-  padding: .75em;
-  margin-left: 20px;
-  border-radius: 10px;
-  background-color: #F69EA1;
-  border: 0px;
-  font-size: 1em;
-  outline: none;
-  transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-}
-
-.input:hover {
-  padding-left: 20px;
-  padding-right: 20px;
-  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);
-}
-
-.wrapper {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  grid-template-rows: 1fr 23fr;
-  width: 100vw;
-  height: 100vh;
-}
-
-.wrapper > div {
-  padding: 1em;
-}
-
-.topBarColor {
-  background-color: #FCDCE1;
-}
-
-.routerViewColor {
-  background-color: #EBF6F1;
-}
-
-.jobViewColor {
-  background-color: #CFEAE0;
-}
-
-.shimmer {
-  animation: shimmer 0.5s cubic-bezier(0.445, 0.05, 0.55, 0.95) 0s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    color: rgba(0, 0, 0, 1);
-  }
-
-  50% {
-    color: rgba(0, 0, 0, .2);
-  }
-
-  100% {
-    color: rgba(0, 0, 0, 1);
-  }
-}
-
-.fade-enter-active {
-  transition: opacity .25s;
-}
-
-.fade-leave-active {
-  transition: opacity 0s;
-}
-
-.fade-enter, .fade-leave-to {
-  opacity: 0;
-}
-
-::-webkit-scrollbar{
-	width: 10px;
-}
-
-::-webkit-scrollbar-track-piece{
-	background-color: rgba(0,0,0,0);
-}
-
-::-webkit-scrollbar-thumb{
-	background-color: #CBCBCB;
-	border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover{
-	background-color: #909090;
-}
+@import url('./css/font-awesome.min.css');
+@import url('./css/appStyle.css');
 
 </style>
