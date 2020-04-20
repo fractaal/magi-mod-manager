@@ -243,6 +243,7 @@ export default {
         logo: mod.logo,
         owner: mod.owner,
         blurb: mod.blurb,
+        id: mod.id,
         reason: payload.reason,
         file_name: payload.file_name,
         enabled: true,
@@ -308,8 +309,21 @@ export default {
 
 <style>
 
-@import url('./css/fonts.css');
-@import url('./css/font-awesome.min.css');
-@import url('./css/appStyle.css');
+  @import url('./css/fonts.css');
+  @import url('./css/font-awesome.min.css');
+  @import url('./css/appStyle.css');
+
+  .list-enter-active, .list-leave-active {
+    position: absolute;
+    transition: all .5s;
+  }
+
+  .list-enter, .list-leave-to {
+    transform: translateX(50px);
+  }
+
+  .list-move {
+    transition: all 1s;
+  }
 
 </style>

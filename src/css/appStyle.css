@@ -226,3 +226,21 @@
   ::-webkit-scrollbar-thumb:hover{
       background-color: #909090;
   }
+
+  .list-enter-active, .list-leave-active {
+    position: absolute;
+    transition: all .3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+
+  .list-move {
+    transition: .3s;
+  }
+
+  .list-enter, .list-leave-to {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+
+  li {
+    list-style-type: none;
+  }
