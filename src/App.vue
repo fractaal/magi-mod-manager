@@ -7,36 +7,22 @@
           <p style="font-size: 14px;">{{config.activeProfile.mods.length}} mods active</p>
           <p style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
         </span>
-        <router-link to="/"><button class="input">Your Mods</button></router-link>
+        <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
+        <button class="input" v-on:click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
         <form v-on:submit.prevent="modSearch" style="position: relative;">
-          <input v-model="modSearchTerm" class="input" type="text" size="50" placeholder="Search...">
+          <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
           <input class="searchButton" type="submit" hidden>
-          <i class="fa fa-search" style="position:absolute; top: 12px; right: 12px;"></i>
+          <i class="fa fa-search" style="color: #fff; position:absolute; top: 18px; right: 15px;"></i>
         </form>
       </div>
       <div class="topBarColor">
       </div>
       <div class="routerViewColor">
         <transition name="fade">
-          <router-view :modSearchResults="modSearchResults" :modDetails="modDetails"/>
+          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails"/>
         </transition>
       </div>
-      <div class="jobViewColor">
-        <h2>Job Queue</h2>
-        <div style="display: grid; grid-template-columns: 1fr; overflow-y: auto; max-height: 87vh;">
-          <transition-group name="fade">
-            <div v-for="job in jobQueue" :key="job.key" class="jobCard" :class="[(job.operation == 'Complete' && job.progress == 1) ? 'success' : ''] + [(job.operation == 'Failed' && job.progress == 1) ? 'failed' : '']">
-              <h2>{{job.name}}</h2>
-              <p>{{job.file_name}}</p>
-              <div class="progress">
-                <span :style="{width: job.progress * 100 + '%'}"></span>
-              </div>
-              <p>{{job.operation}} - {{Math.round(job.progress * 100) + '%'}} - {{job.auxiliary}}</p>
-              <p>{{job.reason}}</p>
-            </div>
-          </transition-group>
-        </div>
-      </div>
+      <JobQueue :jobQueue="jobQueue"></JobQueue>
     </div>
   </div>
 </template>
@@ -65,18 +51,22 @@ const configTemplate = {
 console.log(__dirname)
 
 export default {
+  components: {
+    JobQueue: () => import('./components/JobQueue.vue')
+  },
+
   data() {
     // Initialize this if the app has no existing configuration (first time run)
-    if (!fs.existsSync(AppPath + '/config.json')) {
-      fs.writeFileSync(AppPath + '/config.json',JSON.stringify(configTemplate))
+    if (!fs.existsSync(AppPath + '/default.json')) {
+      fs.writeFileSync(AppPath + '/default.json',JSON.stringify(configTemplate))
     }
 
-    let config = JSON.parse(fs.readFileSync(AppPath + '/config.json'))
+    let config = JSON.parse(fs.readFileSync(AppPath + '/default.json'))
 
     return {
       config: config,
       modSearchTerm: "",
-      modSearchResults: {},
+      modSearchResults: [],
       modDetails: {},
       jobQueue: [
 
@@ -85,97 +75,129 @@ export default {
   },
 
   created() { 
+    // Delete mod event
+    this.$eventHub.$on('deleteMod', (pickedMod) => {
+
+      fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name)
+
+      for (let mod in this.config.activeProfile.mods) {
+        if (this.config.activeProfile.mods[mod].file_name == pickedMod.file_name) {
+          this.config.activeProfile.mods.splice(mod, 1);
+        }
+      }
+        this.saveConfigToFile()
+    });
+
+    // Disable mod event
+    this.$eventHub.$on('disableMod', (pickedMod) => {
+
+      if (pickedMod.enabled) {
+        fs.renameSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name, this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled')
+          pickedMod.enabled = false
+      } else {
+        fs.renameSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled', this.config.activeProfile.modDir + '/' + pickedMod.file_name)
+          pickedMod.enabled = true
+      }
+      this.saveConfigToFile()
+    });
+
     // View mod details event
-    this.$on('viewModDetails', (pickedMod) => {
+    this.$eventHub.$on('viewModDetails', (pickedMod) => {
       console.log(pickedMod)
       this.modDetails = pickedMod;
       this.$router.push('/modDetails');
     });
 
     // Start download event
-    this.$on('startDownload', (pickedMod) => {
+    this.$eventHub.$on('startDownload', (pickedMod) => {
       this.addToJobQueue(pickedMod)
     });
 
+    this.$eventHub.$on('removeFromJobQueue', key => {
+      this.removeFromJobQueue(key);
+    })
+
     let index = 0; // Job manager index
+    let jobManager;
 
     // Job Manager Loop
-    setInterval(() => {
-      console.log("Current job queue index is " + index);
-      
-      /*
-      if (this.jobQueue.length == 0) { return } // Don't start if job queue index is 0
-      if (index > this.jobQueue.length) { index = 0; return } // Reset index to 0 if the index is larger than the queue
-      if (!this.jobQueue[index].lock && this.jobQueue[index].progress != 1) {
-      */
+    if (!jobManager) {
+      jobManager = setInterval(() => {
+        if (this.jobQueue.length == 0 || index > this.jobQueue.length || !this.jobQueue[index]) { index = 0; return } 
+        // Don't start if job queue index is 0; Reset index to 0 if the index is larger than the queue or if current index maps to no job
 
+        if (!this.jobQueue[index].lock && this.jobQueue[index].progress != 1) {
+          this.jobQueue[index].lock = true // Don't work on it again if you're already downloading it
+          setTimeout(() => {
+            let job = this.jobQueue[index];
 
-        this.jobQueue[index].lock = true // Don't work on it again if you're already downloading it
-        setImmediate(() => {
-          let job = this.jobQueue[index];
+            let lastTime = Date.now()
+            let lastRecieved = 0
 
-          let lastTime = Date.now()
-          let lastRecieved = 0
+            let filesize = 0;
 
-          let filesize = 0;
+            function update(meta) { // This is called each time the downloader module gets a new chunk of data
+              job.operation = "Downloading"
+              job.progress = meta.recieved / meta.totalSize
+              job.auxiliary = (size(meta.recieved) + ' of ' + size(meta.totalSize))
 
-          function update(meta) { // This is called each time the downloader module gets a new chunk of data
-            job.operation = "Downloading"
-            job.progress = meta.recieved / meta.totalSize
-            job.auxiliary = (size(meta.recieved) + ' of ' + size(meta.totalSize))
+              lastRecieved = meta.recieved
+              lastTime = Date.now()
 
-            lastRecieved = meta.recieved
-            lastTime = Date.now()
-
-            filesize = meta.totalSize
-          }
-
-          // Grab the mod file
-          job.mod.getFiles({newest_only: 1, mc_version: this.config.activeProfile.version}).then((files) => {
-            let chosen = files[0]
-            
-            console.log(chosen);
-
-            job.file_name = chosen.file_name; // Show the file name
-
-            // Figure out any dependencies it might have
-            for (let dependency in chosen.mod_dependencies) {
-              Curseforge.getMods({mod_key: chosen.mod_dependencies[dependency]}).then((mods) => {
-                this.addToJobQueue(mods[0], "Needed by " + job.name)
-              });
+              filesize = meta.totalSize
             }
 
-            // Download the mod
-            chosen.download(AppPath + "/Mod.jar", {
-              override: true,
-              auto_check: false,
-            }, 
-            update).then(() => {
-              job.operation = "Complete"
-              job.auxiliary = size(filesize)
-              job.progress = 1
-            }).catch(err => {
-              job.progress = 1
-              job.auxiliary = err
-              job.operation = "Failed"
-            });
-          })
-          
-        });
+            // Grab the mod file
+            job.mod.getFiles({newest_only: 1, mc_version: this.config.activeProfile.version}).then((files) => {
+              let chosen = files[0]
+              
+              console.log(chosen);
 
-      /*
-      } else if (this.jobQueue[index].progress == 1) {
-        console.log("Weeee")
-        index++; 
-      }
-      */
+              job.file_name = chosen.file_name; // Show the file name
 
-    }, 1000)
+              // Figure out any dependencies it might have
+              for (let dependency in chosen.mod_dependencies) {
+                Curseforge.getMods({mod_key: chosen.mod_dependencies[dependency]}).then((mods) => {
+                  this.addToJobQueue(mods[0], "Needed by " + job.name)
+                });
+              }
+
+              // Download the mod
+              chosen.download(this.config.activeProfile.modDir + "/" + chosen.file_name, {
+                override: true,
+                auto_check: true,
+              }, 
+              update).then(() => {
+                job.operation = "Complete"
+                job.auxiliary = size(filesize)
+                job.progress = 1
+
+                this.addToMods(job.mod, {reason: job.reason, file_name: chosen.file_name})
+                this.saveConfigToFile()
+
+              }).catch(err => {
+                job.progress = 1
+                job.auxiliary = err
+                job.operation = "Failed"
+              });
+            })
+            
+          }, 1);
+        } else if (this.jobQueue[index].progress == 1) {
+          console.log("Weeee")
+          index++; 
+        }
+
+      }, 1000)
+    } else {
+      console.warn("Job manager already exists!")
+    }
 
   },
 
   methods: {
     modSearch() {
+      this.$router.push('/search')
       this.modSearchResults = [],
       Curseforge.getMods({
         mod_name: this.modSearchTerm,
@@ -189,7 +211,61 @@ export default {
       });
     },
 
+    searchHome() {
+      console.log(this.modSearchResults.length)
+      this.$router.push('/search')
+      if (this.modSearchResults.length == 0) {
+        this.modSearchResults = [],
+        Curseforge.getMods({
+          mod_name: "",
+          mc_version: this.config.activeProfile.version,
+          }).then((mods) => {
+          if (mods.length > 0) {
+            this.modSearchResults = mods;
+          } else {
+            this.modSearchResults = [{name: "No result!!! :(("}]
+          }
+        });
+      }
+    },
+
+    addToMods(mod, payload) {
+      /*
+      let _mod = mod
+      _mod.reason = payload.reason
+      _mod.file_name = payload.file_name
+      _mod.enabled = true
+      this.config.activeProfile.mods.push(_mod)
+      */
+
+      this.config.activeProfile.mods.push({
+        name: mod.name,
+        logo: mod.logo,
+        owner: mod.owner,
+        blurb: mod.blurb,
+        reason: payload.reason,
+        file_name: payload.file_name,
+        enabled: true,
+      })
+    },
+
     addToJobQueue(mod, reason) {
+      if (!this.config.activeProfile.modDir) {
+        remote.dialog.showMessageBox({
+          type: 'info',
+          title: 'Select a mod directory',
+          message: 'Before you can download any mods, select a mod directory (preferably the mods folder in your Minecraft profile)',
+        })
+        if (!this.changeModDirectory()) {
+        remote.dialog.showMessageBox({
+          type: 'error',
+          title: 'No mod directory selected',
+          message: "You didn't select a mod directory! Download aborted.",
+        })
+        return;
+        }
+      }
+
       this.jobQueue.push({
         mod,
         progress: 0,
@@ -201,6 +277,29 @@ export default {
         key: Date.now(),
         lock: false,
       });
+    },
+
+    removeFromJobQueue(key) {
+      for (let job in this.jobQueue) {
+        if (this.jobQueue[job].key == key) {
+          this.jobQueue.splice(job, 1); 
+        }
+      }
+    },
+
+    changeModDirectory() {
+      let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
+      if (chosenDirectory) {
+        this.config.activeProfile.modDir = chosenDirectory[0]
+        return chosenDirectory[0];
+      } else {
+        return null;
+      }
+    },
+
+    saveConfigToFile() {
+      console.log("Saving to file");
+      fs.writeFile(AppPath + '/default.json', JSON.stringify(this.config), () => {console.log("Asynchronous write complete")})
     }
   }
 }

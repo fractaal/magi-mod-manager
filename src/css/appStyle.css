@@ -1,7 +1,8 @@
 * {
     padding: 0;
     margin: 0;
-    font-family: 'Quicksand'
+    font-family: 'Quicksand';
+    transition: 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
   }
   
   .progress {
@@ -30,7 +31,7 @@
   
     border-radius: 15px;
   
-    transition: background-color 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /*transition: background-color 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);*/
   }
   
   .success {
@@ -59,27 +60,35 @@
     color: #EBF6F1;
   
     margin: 1em 5em 1em 5em;
-    padding-top: 3em;
-    padding-bottom: 3em;
+    padding-top: 1.5em;
+    padding-bottom: 1.5em;
     padding-left: 3em;
   
     border-radius: 30px;
+
+   /*transition: 0.2s;*/
+  }
+
+  .disabled {
+    background-color: #4D6453;
+    color: #66856F;
+    filter: saturate(0.5);
   }
   
-  .download {
-    transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  .hover-shine {
+    /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
     filter:opacity(50%);
   }
   
-  .download:hover {
+  .hover-shine:hover {
     filter: opacity(100%);
     cursor: pointer;
   }
   
   
   .animate-hover {
-    transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-    filter: opacity(75%);
+    /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
+    filter: opacity(100%);
   }
   
   .animate-hover:hover {
@@ -113,13 +122,33 @@
     border: 0px;
     font-size: 1em;
     outline: none;
-    transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+    /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
+    color: #fff;
+  }
+
+  .textinput {
+    cursor: pointer;
+    padding: .75em;
+    margin-left: 20px;
+    border-radius: 10px;
+    background-color: #F69EA1;
+    border: 0px;
+    font-size: 1em;
+    outline: none;
+    /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
+    color: #fff;
   }
   
   .input:hover {
     padding-left: 20px;
     padding-right: 20px;
     box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);
+  }
+
+  .textinput:hover {
+    padding-left: 20px;
+    padding-right: 20px;
+    box-shadow: inset 0px 0px 10px 0px rgba(0,0,0,0.2);
   }
   
   .wrapper {
@@ -170,11 +199,11 @@
   }
   
   .fade-enter-active {
-    transition: opacity .25s;
+    /*transition: opacity .25s;*/
   }
   
   .fade-leave-active {
-    transition: opacity 0s;
+    /*transition: opacity 0s;*/
   }
   
   .fade-enter, .fade-leave-to {
