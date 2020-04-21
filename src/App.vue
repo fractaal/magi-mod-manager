@@ -22,7 +22,7 @@
       </div>
       <div class="routerViewColor">
         <transition name="fade">
-          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" :appVersion="appVersion"/>
+          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" :appVersion="appVersion" :changeLogs="changeLogs"/>
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue"></JobQueue>
@@ -54,6 +54,14 @@ export default {
   },
 
   data() {
+    // Get changelogs
+    let changeLogs = [
+      "Partial props data validation across components",
+      "Automatic update functionality (Your Magi instance will connect to github.com/fractaal/magi-mod-manager!)",
+      "Partial separation of app into separate components now", 
+      "Partial implementation of profile functionality",
+      "Magi now watches your current active profile directory for changes (in case you wanna drop in mods!)",
+    ]
     // Initialize this if the app has no existing configuration (first time run)
     if (!fs.existsSync(AppPath + '/default.json')) {
       fs.writeFileSync(AppPath + '/default.json',JSON.stringify(configTemplate))
@@ -84,6 +92,7 @@ export default {
       profileFolderWatcher: {},
       exportImportMenu,
       appVersion: remote.app.getVersion(),
+      changeLogs,
     }
   },
 

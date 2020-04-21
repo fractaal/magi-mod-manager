@@ -4,7 +4,7 @@
   "author": "Ben Jude",
   "description": "Free open source Minecraft Forge Mod Manager",
   "private": true,
-  "repository": "github:fractaal/magi-mod-manager.git",
+  "repository": "github:fractaal/magi-mod-manager",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
