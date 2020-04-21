@@ -1,4 +1,7 @@
 # Magi
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9488cb8874834fa48affc2a2d767bde5)](https://app.codacy.com/manual/fractaal/archon-mod-manager?utm_source=github.com&utm_medium=referral&utm_content=fractaal/archon-mod-manager&utm_campaign=Badge_Grade_Dashboard)
+
 <font color="red">Alpha stage</font>, features may break or not work at all!!!
 
 Hi! Welcome to Magi, a Minecraft Forge mod manager that envisions to be an open-source alternative to apps like Twitch! It uses the Curseforge API to search for mods, just like Twitch, but less invasive and more transparent.
