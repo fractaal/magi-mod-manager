@@ -22,7 +22,7 @@
       </div>
       <div class="routerViewColor">
         <transition name="fade">
-          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" :appVersion="appVersion" :changeLogs="changeLogs"/>
+          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm"/>
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue"></JobQueue>
@@ -58,6 +58,13 @@ export default {
   data() {
     // Get changelogs
     let changeLogs = [
+      "Update functionality fixed (hopefully)",
+      "Notifications when a download has completed / failed",
+      //"Gradient color scheme!",
+      "Icons are no longer distorted",
+      "App opens (successfully) to your mods screen instead of a blank page now",
+      //"No mods found message upon search not yielding any results",
+      //"Refined search functionality!",
       "Fixed import/export menu not showing up when clicking the Magi icon",
       "Partial props data validation across components",
       "Automatic update functionality (Your Magi instance will connect to github.com/fractaal/magi-mod-manager!)",
@@ -262,11 +269,12 @@ export default {
         mc_version: this.config.activeProfile.version,
         page_size: 30,
         }).then((mods) => {
-        if (mods.length > 0) {
-          this.modSearchResults = mods;
-        } else {
-          this.modSearchResults = [{name: "No result!!! :(("}]
-        }
+          if (mods.length > 0) {
+            this.modSearchResults = mods;
+          } else {
+            console.log("No result")
+            this.modSearchResults = [{name: 'noresult', id: 696969}];
+          }
       });
     },
 
@@ -279,11 +287,7 @@ export default {
           mod_name: "",
           mc_version: this.config.activeProfile.version,
           }).then((mods) => {
-          if (mods.length > 0) {
             this.modSearchResults = mods;
-          } else {
-            this.modSearchResults = [{name: "No result!!! :(("}]
-          }
         });
       }
     },
