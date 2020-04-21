@@ -3,7 +3,7 @@
     <div class="wrapper" style="overflow:hidden;">
       <div style="display: flex;" class="topBarColor">
         <span>
-          <img src="./assets/icon.png" style="width: 60px; height: 60px; filter: blur(.5px); cursor: pointer;" v-on:click="() => {ExportImportMenu.popup()}">
+          <img src="./assets/icon.png" style="width: 60px; height: 60px; filter: blur(.5px); cursor: pointer;" v-on:click="() => {exportImportMenu.popup()}">
         </span>
         <span style="margin-left:10px;">
           <h3>{{config.activeProfile.name}}</h3>
@@ -56,6 +56,7 @@ export default {
   data() {
     // Get changelogs
     let changeLogs = [
+      "Fixed import/export menu not showing up when clicking the Magi icon",
       "Partial props data validation across components",
       "Automatic update functionality (Your Magi instance will connect to github.com/fractaal/magi-mod-manager!)",
       "Partial separation of app into separate components now", 
