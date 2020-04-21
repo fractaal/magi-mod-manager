@@ -40,6 +40,8 @@ const size = require('filesize').partial({standard: "iec"}) // Filesize formatti
 
 const AppPath = remote.app.getPath('userData')
 
+// WEEEEEEEEEE
+
 const configTemplate = {
   activeProfile: {
     name: "Default",
@@ -408,7 +410,7 @@ export default {
     },
 
     exportProfile() {
-      
+
     },
 
     importProfile() {
