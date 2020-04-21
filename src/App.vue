@@ -47,9 +47,6 @@ const configTemplate = {
     version: "1.12.2",
   }
 }
-
-console.log(__dirname)
-
 export default {
   components: {
     JobQueue: () => import('./components/JobQueue.vue')
@@ -77,8 +74,12 @@ export default {
   created() { 
     // Delete mod event
     this.$eventHub.$on('deleteMod', (pickedMod) => {
-
-      fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name)
+      
+      if (pickedMod.enabled) {
+        fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name)
+      } else {
+        fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled')
+      }
 
       for (let mod in this.config.activeProfile.mods) {
         if (this.config.activeProfile.mods[mod].file_name == pickedMod.file_name) {
@@ -117,6 +118,10 @@ export default {
       this.removeFromJobQueue(key);
     })
 
+    this.$eventHub.$on('searchHome', () => {
+      this.searchHome();
+    });
+
     let index = 0; // Job manager index
     let jobManager;
 
@@ -148,7 +153,7 @@ export default {
             }
 
             // Grab the mod file
-            job.mod.getFiles({newest_only: 1, mc_version: this.config.activeProfile.version}).then((files) => {
+            job.mod.getFiles({newest_only: true, mc_version: this.config.activeProfile.version}).then((files) => {
               let chosen = files[0]
               
               console.log(chosen);
@@ -202,6 +207,7 @@ export default {
       Curseforge.getMods({
         mod_name: this.modSearchTerm,
         mc_version: this.config.activeProfile.version,
+        page_size: 30,
         }).then((mods) => {
         if (mods.length > 0) {
           this.modSearchResults = mods;
@@ -267,6 +273,15 @@ export default {
         }
       }
 
+      if (this.modExistsInProfile(mod)) {
+        console.warn(mod.name + " already exists");
+        return;
+      }
+
+      if (this.modExistsInJobQueue(mod)) {
+        console.warn(mod.name + " already exists");
+      }
+
       this.jobQueue.push({
         mod,
         progress: 0,
@@ -301,6 +316,24 @@ export default {
     saveConfigToFile() {
       console.log("Saving to file");
       fs.writeFile(AppPath + '/default.json', JSON.stringify(this.config), () => {console.log("Asynchronous write complete")})
+    },
+
+    modExistsInProfile(_mod) {
+      for (let mod in this.config.activeProfile.mods) {
+        if (this.config.activeProfile.mods[mod].id == _mod.id) {
+          return true;
+        }
+      }
+      return false;
+    },
+
+    modExistsInJobQueue(_mod) {
+      for (let job in this.jobQueue) {
+        if (this.jobQueue[job].mod.id == _mod.id) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }
@@ -312,18 +345,5 @@ export default {
   @import url('./css/fonts.css');
   @import url('./css/font-awesome.min.css');
   @import url('./css/appStyle.css');
-
-  .list-enter-active, .list-leave-active {
-    position: absolute;
-    transition: all .5s;
-  }
-
-  .list-enter, .list-leave-to {
-    transform: translateX(50px);
-  }
-
-  .list-move {
-    transition: all 1s;
-  }
 
 </style>
