@@ -22,7 +22,7 @@
       </div>
       <div class="routerViewColor">
         <transition name="fade">
-          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails"/>
+          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" :appVersion="appVersion"/>
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue"></JobQueue>
@@ -39,8 +39,6 @@ const { remote } = require('electron') // dialogs and stuff
 const size = require('filesize').partial({standard: "iec"}) // Filesize formatting
 
 const AppPath = remote.app.getPath('userData')
-
-// WEEEEEEEEEE
 
 const configTemplate = {
   activeProfile: {
@@ -64,7 +62,7 @@ export default {
     let config = JSON.parse(fs.readFileSync(AppPath + '/default.json'))
 
     // Export/import menu items
-    var ExportImportMenu = remote.Menu.buildFromTemplate([
+    var exportImportMenu = remote.Menu.buildFromTemplate([
       {
         label: 'Export profile...',
         click: this.exportProfile,
@@ -84,7 +82,8 @@ export default {
 
       ],
       profileFolderWatcher: {},
-      ExportImportMenu,
+      exportImportMenu,
+      appVersion: remote.app.getVersion(),
     }
   },
 

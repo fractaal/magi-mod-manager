@@ -1,9 +1,10 @@
 {
   "name": "magi",
-  "version": "0.0.2",
+  "version": "0.1.2",
   "author": "Ben Jude",
   "description": "Free open source Minecraft Forge Mod Manager",
   "private": true,
+  "repository": "github:fractaal/magi-mod-manager.git",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -19,6 +20,7 @@
     "filesize": "^6.1.0",
     "javascript-time-ago": "^2.0.7",
     "mc-curseforge-api": "^1.0.6",
+    "update-electron-app": "^1.5.0",
     "vue": "^2.6.11",
     "vue-router": "^3.1.6",
     "vuex": "^3.1.3"
