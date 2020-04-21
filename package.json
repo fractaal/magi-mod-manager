@@ -17,10 +17,10 @@
   "main": "background.js",
   "dependencies": {
     "core-js": "^3.6.4",
+    "electron-updater": "^4.2.5",
     "filesize": "^6.1.0",
     "javascript-time-ago": "^2.0.7",
     "mc-curseforge-api": "^1.0.6",
-    "update-electron-app": "^1.5.0",
     "vue": "^2.6.11",
     "vue-router": "^3.1.6",
     "vuex": "^3.1.3"

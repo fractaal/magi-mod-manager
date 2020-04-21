@@ -2,7 +2,7 @@
   <div class="home">
     <div style="display: grid; grid-columns-template: 1fr; max-height: 100vh; overflow: auto; margin-left:1em; margin-right:1em;">
       <br>
-      <button style="margin-left:20px; margin-right:20px; margin-bottom: 20px;" class="input" v-on:click="$router.go(-1)">Go Back</button>
+      <button style="margin-left:20px; margin-right:20px; margin-bottom: 20px;" class="input" @click="$router.go(-1)">Go Back</button>
       <div style="display: flex;">
         <div style="margin-right: 1em;">
           <img :src="modDetails.logo">

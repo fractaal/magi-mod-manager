@@ -9,5 +9,9 @@ Vue.prototype.$eventHub = new Vue();
 new Vue({
   router,
   store,
-  render: h => h(App)
+  render: h => h(App),
+  created() {
+    // Prevent blank screen
+    this.$router.push('/')
+  }
 }).$mount('#app')
