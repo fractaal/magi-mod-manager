@@ -2,6 +2,9 @@
   <div id="app">
     <div class="wrapper" style="overflow:hidden;">
       <div style="display: flex;" class="topBarColor">
+        <span>
+          <img src="./assets/icon.png" style="width: 60px; height: 60px; filter: blur(.5px); cursor: pointer;" v-on:click="() => {ExportImportMenu.popup()}">
+        </span>
         <span style="margin-left:10px;">
           <h3>{{config.activeProfile.name}}</h3>
           <p style="font-size: 14px;">{{config.activeProfile.mods.length}} mods active</p>
@@ -37,8 +40,6 @@ const size = require('filesize').partial({standard: "iec"}) // Filesize formatti
 
 const AppPath = remote.app.getPath('userData')
 
-console.log(AppPath)
-
 const configTemplate = {
   activeProfile: {
     name: "Default",
@@ -60,6 +61,18 @@ export default {
 
     let config = JSON.parse(fs.readFileSync(AppPath + '/default.json'))
 
+    // Export/import menu items
+    var ExportImportMenu = remote.Menu.buildFromTemplate([
+      {
+        label: 'Export profile...',
+        click: this.exportProfile,
+      },
+      {
+        label: 'Import profile...',
+        click: this.importProfile,
+      }
+    ])
+
     return {
       config: config,
       modSearchTerm: "",
@@ -68,6 +81,8 @@ export default {
       jobQueue: [
 
       ],
+      profileFolderWatcher: {},
+      ExportImportMenu,
     }
   },
 
@@ -75,10 +90,14 @@ export default {
     // Delete mod event
     this.$eventHub.$on('deleteMod', (pickedMod) => {
       
-      if (pickedMod.enabled) {
-        fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name)
-      } else {
-        fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled')
+      try {
+        if (pickedMod.enabled) {
+          fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name)
+        } else {
+          fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled')
+        }
+      } catch {
+        console.warn("Mod file was already deleted or the object does not have the .enabled key");
       }
 
       for (let mod in this.config.activeProfile.mods) {
@@ -91,7 +110,6 @@ export default {
 
     // Disable mod event
     this.$eventHub.$on('disableMod', (pickedMod) => {
-
       if (pickedMod.enabled) {
         fs.renameSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name, this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled')
           pickedMod.enabled = false
@@ -114,27 +132,34 @@ export default {
       this.addToJobQueue(pickedMod)
     });
 
+    // Remove specific job from Queue
     this.$eventHub.$on('removeFromJobQueue', key => {
       this.removeFromJobQueue(key);
     })
 
+    // Display search home event
     this.$eventHub.$on('searchHome', () => {
       this.searchHome();
     });
 
-    let index = 0; // Job manager index
+    // Watch currently active profile folder
+    if (this.config.activeProfile.modDir) {
+      this.startProfileFolderWatcher()
+    }
+
+    let jobQueueIndex = 0; // Job manager jobQueueIndex
     let jobManager;
 
     // Job Manager Loop
     if (!jobManager) {
       jobManager = setInterval(() => {
-        if (this.jobQueue.length == 0 || index > this.jobQueue.length || !this.jobQueue[index]) { index = 0; return } 
-        // Don't start if job queue index is 0; Reset index to 0 if the index is larger than the queue or if current index maps to no job
+        if (this.jobQueue.length == 0 || jobQueueIndex > this.jobQueue.length || !this.jobQueue[jobQueueIndex]) { jobQueueIndex = 0; return } 
+        // Don't start if job queue jobQueueIndex is 0; Reset jobQueueIndex to 0 if the jobQueueIndex is larger than the queue or if current jobQueueIndex maps to no job
 
-        if (!this.jobQueue[index].lock && this.jobQueue[index].progress != 1) {
-          this.jobQueue[index].lock = true // Don't work on it again if you're already downloading it
+        if (!this.jobQueue[jobQueueIndex].lock && this.jobQueue[jobQueueIndex].progress != 1) {
+          this.jobQueue[jobQueueIndex].lock = true // Don't work on it again if you're already downloading it
           setTimeout(() => {
-            let job = this.jobQueue[index];
+            let job = this.jobQueue[jobQueueIndex];
 
             let lastTime = Date.now()
             let lastRecieved = 0
@@ -188,9 +213,9 @@ export default {
             })
             
           }, 1);
-        } else if (this.jobQueue[index].progress == 1) {
+        } else if (this.jobQueue[jobQueueIndex].progress == 1) {
           console.log("Weeee")
-          index++; 
+          jobQueueIndex++; 
         }
 
       }, 1000)
@@ -236,24 +261,29 @@ export default {
     },
 
     addToMods(mod, payload) {
-      /*
-      let _mod = mod
-      _mod.reason = payload.reason
-      _mod.file_name = payload.file_name
-      _mod.enabled = true
-      this.config.activeProfile.mods.push(_mod)
-      */
-
-      this.config.activeProfile.mods.push({
-        name: mod.name,
-        logo: mod.logo,
-        owner: mod.owner,
-        blurb: mod.blurb,
-        id: mod.id,
-        reason: payload.reason,
-        file_name: payload.file_name,
-        enabled: true,
-      })
+      if (mod) {
+        this.config.activeProfile.mods.push({
+          name: mod.name,
+          logo: mod.logo,
+          owner: mod.owner,
+          blurb: mod.blurb,
+          id: mod.id,
+          managed: true,
+          reason: payload.reason,
+          file_name: payload.file_name,
+          enabled: true,
+        })
+      } else {
+        this.config.activeProfile.mods.push({
+          name: payload.file_name,
+          reason: payload.reason,
+          file_name: payload.file_name,
+          owner: "Unknown",
+          enabled: true,
+          managed: false,
+          id: Date.now(),
+        })
+      }
     },
 
     addToJobQueue(mod, reason) {
@@ -307,6 +337,7 @@ export default {
       let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
       if (chosenDirectory) {
         this.config.activeProfile.modDir = chosenDirectory[0]
+        this.startProfileFolderWatcher()
         return chosenDirectory[0];
       } else {
         return null;
@@ -334,6 +365,54 @@ export default {
         }
       }
       return false;
+    },
+
+    startProfileFolderWatcher() {
+      this.profileFolderWatcher = fs.watch(this.config.activeProfile.modDir, (eventType, filename) => {
+        console.log(eventType, filename)
+        if (eventType == "rename") {
+          if (path.extname(filename) == ".disabled") { // Something has happened to a .disabled file
+            if (fs.existsSync(this.config.activeProfile.modDir + '/' + path.basename(filename, '.disabled'))) { // If the file now has the .jar extension
+              console.warn("it was just enabled, silly me!")
+              return; // It was just enabled
+            } else {
+              this.$eventHub.$emit('deleteMod', {file_name: filename});
+            }
+          } else if (path.extname(filename) == ".jar") { // Something has happened to a .jar file
+            if (fs.existsSync(this.config.activeProfile.modDir + '/' + filename)) {
+              for (let mod in this.config.activeProfile.mods) {
+                if (this.config.activeProfile.mods[mod].file_name == filename) {
+                  return;
+                }
+              }
+              for (let job in this.jobQueue) {
+                if (this.jobQueue[job].file_name == filename) {
+                  return;
+                }
+              }
+              console.warn(".jar file was added outside of Magi");
+              this.addToMods(null, {file_name: filename, reason: "Added manually outside of Magi"})
+            } else if (fs.existsSync(this.config.activeProfile.modDir + '/' + filename + '.disabled')) {
+              console.warn("it was just disabled, silly me!")
+              return // it was just disabled
+            } else {
+              this.$eventHub.$emit('deleteMod', {file_name: filename});
+            }
+          }
+        }
+      })
+    }, 
+
+    stopProfileFolderWatcher() {
+      this.profileFolderWatcher().close()
+    },
+
+    exportProfile() {
+      
+    },
+
+    importProfile() {
+
     }
   }
 }

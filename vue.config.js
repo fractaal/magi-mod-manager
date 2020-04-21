@@ -6,6 +6,7 @@ module.exports = {
         "productName": "Magi Mod Manager",
         "directories": {
           "buildResources": "./build"
+        }
       }
     }
   }
