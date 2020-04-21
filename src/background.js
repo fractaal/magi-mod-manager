@@ -12,6 +12,18 @@ const { autoUpdater } = require('electron-updater')
 let win
 autoUpdater.checkForUpdatesAndNotify()
 
+autoUpdater.on('error', () => {
+  new Notification('Update failed!')
+})
+
+autoUpdater.on('update-available', () => {
+  new Notification('Update available!')
+})
+
+autoUpdater.on('update-downloaded', () => {
+  new Notification('Update downloaded!')
+})
+
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: { secure: true, standard: true } }])
 
