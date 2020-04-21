@@ -11,6 +11,9 @@
 </template>
 
 <script>
+import HomeCard from '../components/HomeCard'
+import WelcomeCard from '../components/WelcomeCard'
+
 export default {
   name: 'Home',
   props: {
@@ -19,9 +22,8 @@ export default {
       changeLogs: Array,
       },
   components: {
-    HomeCard: () => import('../components/HomeCard.vue'),
-    WelcomeCard: () => import ('../components/WelcomeCard.vue'),
-    //ChangeLogs: () => import('../components/ChangeLogs.vue')
+    HomeCard,
+    WelcomeCard,
   }
 }
 </script>

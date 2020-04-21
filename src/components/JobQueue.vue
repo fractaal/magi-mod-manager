@@ -10,11 +10,12 @@
 </template>
 
 <script>
+import JobCard from '@/components/JobCard'
 export default {
   name: "JobQueue",
   props: ['jobQueue'],
   components: {
-    JobCard: () => import('@/components/JobCard.vue')
+    JobCard,
   }
 }
 </script>

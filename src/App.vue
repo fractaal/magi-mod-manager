@@ -38,6 +38,8 @@ const path = require('path') // file extension things
 const { remote } = require('electron') // dialogs and stuff
 const size = require('filesize').partial({standard: "iec"}) // Filesize formatting
 
+import JobQueue from './components/JobQueue'
+
 const AppPath = remote.app.getPath('userData')
 
 const configTemplate = {
@@ -50,7 +52,7 @@ const configTemplate = {
 }
 export default {
   components: {
-    JobQueue: () => import('./components/JobQueue.vue')
+    JobQueue
   },
 
   data() {
@@ -213,6 +215,15 @@ export default {
                 job.auxiliary = size(filesize)
                 job.progress = 1
 
+                // Notify user
+                let downloadCompleteNotification = new Notification(job.name + " has finished downloading!", {
+                  body: "Total size: " + size(filesize)
+                })
+
+                downloadCompleteNotification.onclick = () => {
+                  remote.getCurrentWindow().maximize();
+                }
+
                 this.addToMods(job.mod, {reason: job.reason, file_name: chosen.file_name})
                 this.saveConfigToFile()
 
@@ -220,6 +231,12 @@ export default {
                 job.progress = 1
                 job.auxiliary = err
                 job.operation = "Failed"
+
+                let downloadCompleteNotification = new Notification(job.name + " failed to download!")
+
+                downloadCompleteNotification.onclick = () => {
+                  remote.getCurrentWindow().maximize();
+                }
               });
             })
             
