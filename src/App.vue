@@ -12,7 +12,7 @@
       <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
       <button class="input" v-on:click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
       <form v-on:submit.prevent="modSearch" style="position: relative;">
-        <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
+        <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="100" placeholder="Search...">
         <input class="searchButton" type="submit" hidden>
         <i class="fa fa-search" style="color: #fff; position:absolute; top: 18px; right: 15px;"></i>
       </form>
@@ -46,7 +46,7 @@ const configTemplate = {
   activeProfile: {
     name: "Default",
     mods: [],
-    modDir: "",
+    instanceDirectory: "",
     version: "1.12.2",
   }
 }
@@ -58,19 +58,12 @@ export default {
   data() {
     // Get changeLogs
     let changeLogs = [
-      "Update functionality fixed (hopefully)",
-      "Notifications when a download has completed / failed",
-      //"Gradient color scheme!",
-      "Icons are no longer distorted",
-      "App opens (successfully) to your mods screen instead of a blank page now",
-      "No mods found message upon search not yielding any results",
-      //"Refined search functionality!",
-      "Fixed import/export menu not showing up when clicking the Magi icon",
-      "Partial props data validation across components",
-      "Automatic update functionality (Your Magi instance will connect to github.com/fractaal/magi-mod-manager!)",
-      "Partial separation of app into separate components now", 
-      "Partial implementation of profile functionality",
-      "Magi now watches your current active profile directory for changes (in case you wanna drop in mods!)",
+      "Download notifications!",
+      "Custom profile functionality!",
+      "Import and export profiles!",
+      "Color redesign!",
+      "Refined search!",
+      "Bug fixes (Blank views, auto-update, distorted icons)!"
     ]
 
     // Get versions
@@ -98,8 +91,15 @@ export default {
         click: this.newProfile
       },
       {
+        label: 'Configure profile...',
+        click: this.configureProfile,
+      },
+      {
         label: 'Change profile...',
         click: this.changeProfile
+      },
+      {
+        type: 'separator'
       },
       {
         label: 'Export profile...',
@@ -126,6 +126,7 @@ export default {
       },
       refinedSearchFilters: {
         mc_version: 'activeProfileVersion',
+        category: ''
       },
       noResultFound: false,
       computedScreenWidth: remote.getCurrentWindow().getSize()[0],
@@ -139,9 +140,9 @@ export default {
       
       try {
         if (pickedMod.enabled) {
-          fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name)
+          fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name)
         } else {
-          fs.unlinkSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled')
+          fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled')
         }
       } catch {
         console.warn("Mod file was already deleted or the object does not have the .enabled key");
@@ -158,10 +159,10 @@ export default {
     // Disable mod event
     this.$eventHub.$on('disableMod', (pickedMod) => {
       if (pickedMod.enabled) {
-        fs.renameSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name, this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled')
+        fs.renameSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name, this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled')
           pickedMod.enabled = false
       } else {
-        fs.renameSync(this.config.activeProfile.modDir + '/' + pickedMod.file_name + '.disabled', this.config.activeProfile.modDir + '/' + pickedMod.file_name)
+        fs.renameSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled', this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name)
           pickedMod.enabled = true
       }
       this.saveConfigToFile()
@@ -190,7 +191,7 @@ export default {
     });
 
     // Watch currently active profile folder
-    if (this.config.activeProfile.modDir) {
+    if (this.config.activeProfile.instanceDirectory) {
       this.startProfileFolderWatcher()
     }
 
@@ -249,7 +250,7 @@ export default {
               }
 
               // Download the mod
-              chosen.download(this.config.activeProfile.modDir + "/" + chosen.file_name, {
+              chosen.download(this.config.activeProfile.instanceDirectory + '/mods' + "/" + chosen.file_name, {
                 override: true,
                 auto_check: true,
               }, 
@@ -356,17 +357,17 @@ export default {
     },
 
     addToJobQueue(mod, reason) {
-      if (!this.config.activeProfile.modDir) {
+      if (!this.config.activeProfile.instanceDirectory) {
         remote.dialog.showMessageBox({
           type: 'info',
-          title: 'Select a mod directory',
-          message: 'Before you can download any mods, select a mod directory (preferably the mods folder in your Minecraft profile)',
+          title: 'Select an instance directory',
+          message: 'Before you can download any mods, select a Minecraft instance directory.',
         })
-        if (!this.changeModDirectory()) {
+        if (!this.changeInstanceDirectory) {
         remote.dialog.showMessageBox({
           type: 'error',
-          title: 'No mod directory selected',
-          message: "You didn't select a mod directory! Download aborted.",
+          title: 'No directory selected',
+          message: "You didn't select a directory! Download aborted.",
         })
         return;
         }
@@ -402,10 +403,11 @@ export default {
       }
     },
 
-    changeModDirectory() {
+    changeInstanceDirectory() {
       let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
+      console.log(chosenDirectory);
       if (chosenDirectory) {
-        this.config.activeProfile.modDir = chosenDirectory[0]
+        this.config.activeProfile.instanceDirectory = chosenDirectory[0]
         this.startProfileFolderWatcher()
         return chosenDirectory[0];
       } else {
@@ -437,18 +439,18 @@ export default {
     },
 
     startProfileFolderWatcher() {
-      this.profileFolderWatcher = fs.watch(this.config.activeProfile.modDir, (eventType, filename) => {
+      this.profileFolderWatcher = fs.watch(this.config.activeProfile.instanceDirectory + '/mods', (eventType, filename) => {
         console.log(eventType, filename)
         if (eventType == "rename") {
           if (path.extname(filename) == ".disabled") { // Something has happened to a .disabled file
-            if (fs.existsSync(this.config.activeProfile.modDir + '/' + path.basename(filename, '.disabled'))) { // If the file now has the .jar extension
+            if (fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + path.basename(filename, '.disabled'))) { // If the file now has the .jar extension
               console.warn("it was just enabled, silly me!")
               return; // It was just enabled
             } else {
               this.$eventHub.$emit('deleteMod', {file_name: filename});
             }
           } else if (path.extname(filename) == ".jar") { // Something has happened to a .jar file
-            if (fs.existsSync(this.config.activeProfile.modDir + '/' + filename)) {
+            if (fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + filename)) {
               for (let mod in this.config.activeProfile.mods) {
                 if (this.config.activeProfile.mods[mod].file_name == filename) {
                   return;
@@ -461,7 +463,7 @@ export default {
               }
               console.warn(".jar file was added outside of Magi");
               this.addToMods(null, {file_name: filename, reason: "Added manually outside of Magi"})
-            } else if (fs.existsSync(this.config.activeProfile.modDir + '/' + filename + '.disabled')) {
+            } else if (fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + filename + '.disabled')) {
               console.warn("it was just disabled, silly me!")
               return // it was just disabled
             } else {
