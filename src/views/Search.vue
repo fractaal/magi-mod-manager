@@ -1,8 +1,9 @@
 <template>
   <div>
     <span style="display: flex;">
-      <h1 style="margin-left: 2em; margin-right: 2em;">Search</h1>
-      <SearchDropdownList label="Version" :list="refinedSearchFiltersTemplate.minecraftVersions" type="mc_version" :activeProfileVersion="activeProfileVersion"/>
+      <h1 class="gap">Search</h1>
+      <SearchDropdownList class="gap" label="Version" :list="refinedSearchFiltersTemplate.mc_version" type="mc_version" :activeProfileVersion="activeProfileVersion" :selected="refinedSearchFilters.mc_version"/>
+      <SearchDropdownList class="gap" label="Category" :list="category" type="category" :selected="refinedSearchFilters.category"/>
     </span>
     <br>
     <div style="max-height: 85vh; overflow-y: auto;">
@@ -19,7 +20,7 @@
           <div style="display: flex;" v-on:click="$eventHub.$emit('viewModDetails', modSearchResult)" class=" animate-hover">
             <img :src="modSearchResult.logo" style="height: 100px; width: 100px; object-fit: contain; margin-right:1em;">
             <div style="display: grid; grid-columns-template: 1fr;">
-              <p style="font-size: 2em;">{{modSearchResult.name}}</p>
+              <p style="font-size: 2em; font-weight: 900;">{{modSearchResult.name}}</p>
               <p>By <b>{{modSearchResult.owner}}</b></p>
               <p>{{modSearchResult.blurb}}</p>
             </div>
@@ -44,7 +45,47 @@ export default {
     modSearchTerm: String,
     noResultFound: Boolean,
     refinedSearchFiltersTemplate: Object,
+    refinedSearchFilters: Object,
     activeProfileVersion: String,
+  },
+  data() {
+    return {
+      category: [
+        'Biomes',
+        'Ores and Resources',
+        'Structures',
+        'Dimensions',
+        'Mobs',
+        'Processing',
+        'Player Transport',
+        'Energy, Fluid and Item Transport',
+        'Farming',
+        'Redstone',
+        'Genetics',
+        'Magic',
+        'Storage',
+        'API and Library',
+        'Adventure and RPG',
+        'Map and Information',
+        'Cosmetic',
+        'Miscellaneous',
+        'Thermal Expansion',
+        'Tinker\'s Construct',
+        'Industrial Craft',
+        'Thaumcraft',
+        'Buildcraft',
+        'Forestry',
+        'Blood Magic',
+        'Lucky Blocks',
+        'Applied Energistics 2',
+        'CraftTweaker',
+        'Armor, Tools and Weapons',
+        'Server Utility',
+        'Food',
+        'Twitch Integration',
+        'Fabric'
+      ]
+    }
   },
   components: {
     SearchDropdownList,

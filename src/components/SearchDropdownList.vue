@@ -1,8 +1,9 @@
 <template>
   <div>
     <label style="font-size: 14px; margin-right: 10px;" :for="label">{{label}}</label>
-    <select v-model="selected" :id="label">
-      <option value="activeProfileVersion">Active profile version</option>
+    <select @change="update" v-model="selectedChoice" :id="label" :selected="selectedChoice">
+      <option v-if="type == 'mc_version'" value="activeProfileVersion">Active profile version</option>
+      <option v-if="type == 'category'" value="">None</option>
       <option v-for="item in displayList" :key="item">{{item}}</option>
     </select>
   </div>
@@ -10,42 +11,41 @@
 
 <script>
   export default {
-    name: "DropdownList",
+    name: "SearchDropdownList",
     props: {
       list: [Object, Array],
       type: String,
       activeProfileVersion: String,
+      selected: String,
       label: String,
     },
 
     data() {
       return {
         displayList: [],
-        selected: null,
+        selectedChoice: this.selected,
       }
     },
 
     methods: {
       update() {
         this.$eventHub.$emit('updateSearchFilters', {
-          [this.type]: this.selected
+          [this.type]: this.selectedChoice
         })
       }
     },
 
-    watch: {
-      selected: function() {
-        this.update();
-      }
-    },
-
     created() {
-      this.selected = 'activeProfileVersion'
+      console.log(this.selected)
       if (this.type == "mc_version") {
         for (let version in this.list.versions) {
           if (this.list.versions[version].type === "release") {
             this.displayList.push(this.list.versions[version].id)
           }
+        }
+      } else {
+        for (let item in this.list) {
+          this.displayList.push(this.list[item])
         }
       }
     }
@@ -64,6 +64,6 @@ select {
 
 select option {
   font-size: 1.5em;
-  background-color: rgba(0,0,0,0);
+  background-color: rgba(0,0,0,1);
 }
 </style>

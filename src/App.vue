@@ -1,30 +1,28 @@
 <template>
-  <div id="app">
+  <div id="app" style="overflow: hidden">
+    <div style="display: flex; padding: 20px;" class="topBarColor">
+      <span>
+        <img src="./assets/100px.png" style="width: 60px; height: 60px; cursor: pointer;" v-on:click="() => {exportImportMenu.popup()}">
+      </span>
+      <span style="margin-left:10px;">
+        <h3 class="white-text">{{config.activeProfile.name}}</h3>
+        <p class="white-text" style="font-size: 14px;">{{config.activeProfile.mods.length}} mods active</p>
+        <p class="white-text" style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
+      </span>
+      <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
+      <button class="input" v-on:click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
+      <form v-on:submit.prevent="modSearch" style="position: relative;">
+        <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
+        <input class="searchButton" type="submit" hidden>
+        <i class="fa fa-search" style="color: #fff; position:absolute; top: 18px; right: 15px;"></i>
+      </form>
+    </div>
     <div class="wrapper" style="overflow:hidden;">
-      <div style="display: flex;" class="topBarColor">
-        <span>
-          <img src="./assets/icon.png" style="width: 60px; height: 60px; filter: blur(.5px); cursor: pointer;" v-on:click="() => {exportImportMenu.popup()}">
-        </span>
-        <span style="margin-left:10px;">
-          <h3>{{config.activeProfile.name}}</h3>
-          <p style="font-size: 14px;">{{config.activeProfile.mods.length}} mods active</p>
-          <p style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
-        </span>
-        <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
-        <button class="input" v-on:click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
-        <form v-on:submit.prevent="modSearch" style="position: relative;">
-          <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
-          <input class="searchButton" type="submit" hidden>
-          <i class="fa fa-search" style="color: #fff; position:absolute; top: 18px; right: 15px;"></i>
-        </form>
-      </div>
-      <div class="topBarColor">
-      </div>
       <div class="routerViewColor">
         <transition name="fade">
           <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
                         :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
-                        :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound"/>
+                        :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"/>
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue"></JobQueue>
@@ -65,7 +63,7 @@ export default {
       //"Gradient color scheme!",
       "Icons are no longer distorted",
       "App opens (successfully) to your mods screen instead of a blank page now",
-      //"No mods found message upon search not yielding any results",
+      "No mods found message upon search not yielding any results",
       //"Refined search functionality!",
       "Fixed import/export menu not showing up when clicking the Magi icon",
       "Partial props data validation across components",
@@ -124,10 +122,14 @@ export default {
       appVersion: remote.app.getVersion(),
       changeLogs: changeLogs,
       refinedSearchFiltersTemplate: {
-        minecraftVersions,
+        mc_version: minecraftVersions,
       },
-      refinedSearchFilters: {},
+      refinedSearchFilters: {
+        mc_version: 'activeProfileVersion',
+      },
       noResultFound: false,
+      computedScreenWidth: remote.getCurrentWindow().getSize()[0],
+      computedScreenHeight: remote.getCurrentWindow().getSize()[1]
     }
   },
 
@@ -191,23 +193,15 @@ export default {
     if (this.config.activeProfile.modDir) {
       this.startProfileFolderWatcher()
     }
+
     // Update refined search filters
     this.$eventHub.$on('updateSearchFilters', change => {
-      console.log(this.refinedSearchFilters);
       for (let key in change) {
-        if (key == "mc_version" && change[key] == "activeProfileVersion") {
-          this.refinedSearchFilters[key] = this.config.activeProfile.version;
-          return;
-        }
         this.refinedSearchFilters[key] = change[key]
       }
       this.modSearch();
     })
 
-    // Default values for startup
-    this.refinedSearchFilters = {
-      mc_version: this.config.activeProfile.version
-    }
 
     let jobQueueIndex = 0; // Job manager jobQueueIndex
     let jobManager;
@@ -309,6 +303,8 @@ export default {
       this.modSearchResults = []
       this.noResultFound = false
       this.refinedSearchFilters.mod_name = this.modSearchTerm;
+      this.refinedSearchFilters.mc_version = 
+        this.refinedSearchFilters.mc_version == "activeProfileVersion" ? this.config.activeProfile.version : this.refinedSearchFilters.mc_version
       Curseforge.getMods(this.refinedSearchFilters).then((mods) => {
           if (mods.length > 0) {
             this.modSearchResults = mods;
