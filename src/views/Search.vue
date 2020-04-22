@@ -1,18 +1,20 @@
 <template>
   <div>
-    <span style="display: grid; grid-template-columns: auto auto auto auto;">
-      <h1 style="margin-left: 3.5em;">Search</h1>
-      <DropdownList/>
+    <span style="display: flex;">
+      <h1 style="margin-left: 2em; margin-right: 2em;">Search</h1>
+      <SearchDropdownList label="Version" :list="refinedSearchFiltersTemplate.minecraftVersions" type="mc_version" :activeProfileVersion="activeProfileVersion"/>
     </span>
     <br>
     <div style="max-height: 85vh; overflow-y: auto;">
-      <span v-if="modSearchResults.length == 0">
+      <span v-if="modSearchResults.length == 0 && !noResultFound">
         <div v-for="index in 10" :key="index" class="card shimmer" style="height: 5em;"></div>
       </span>
-      <transition-group name="fade">
-        <div v-if="modSearchResults[0].name == 'noresult'" style="height: 75vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <h1>We couldn't find "{{modSearchTerm}}". :(</h1>
+      <transition name="name">
+        <div v-if="noResultFound" style="height: 75vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <h1>We couldn't find that mod. Try searching for something else! :(</h1>
         </div>
+      </transition>
+      <transition-group name="fade">
         <div v-for="modSearchResult in modSearchResults" :key="modSearchResult.id" class="card" style="display: grid; grid-template-columns: 3fr 1fr;">
           <div style="display: flex;" v-on:click="$eventHub.$emit('viewModDetails', modSearchResult)" class=" animate-hover">
             <img :src="modSearchResult.logo" style="height: 100px; width: 100px; object-fit: contain; margin-right:1em;">
@@ -33,16 +35,19 @@
 </template>
 
 <script>
-import DropdownList from '@/components/DropdownList.vue'
+import SearchDropdownList from '@/components/SearchDropdownList.vue'
 
 export default {
   name: 'Home',
   props: {
     modSearchResults: Array,
     modSearchTerm: String,
+    noResultFound: Boolean,
+    refinedSearchFiltersTemplate: Object,
+    activeProfileVersion: String,
   },
   components: {
-    DropdownList,
+    SearchDropdownList,
   }
 }
 </script>

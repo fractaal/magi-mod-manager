@@ -22,7 +22,9 @@
       </div>
       <div class="routerViewColor">
         <transition name="fade">
-          <router-view :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm"/>
+          <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
+                        :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
+                        :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound"/>
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue"></JobQueue>
@@ -56,7 +58,7 @@ export default {
   },
 
   data() {
-    // Get changelogs
+    // Get changeLogs
     let changeLogs = [
       "Update functionality fixed (hopefully)",
       "Notifications when a download has completed / failed",
@@ -72,6 +74,18 @@ export default {
       "Partial implementation of profile functionality",
       "Magi now watches your current active profile directory for changes (in case you wanna drop in mods!)",
     ]
+
+    // Get versions
+    let versionRequest = new XMLHttpRequest()
+    versionRequest.open('GET', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false);
+    versionRequest.send(null);
+
+    let minecraftVersions;
+
+    if (versionRequest.status === 200) {
+      minecraftVersions = JSON.parse(versionRequest.responseText);
+    }
+
     // Initialize this if the app has no existing configuration (first time run)
     if (!fs.existsSync(AppPath + '/default.json')) {
       fs.writeFileSync(AppPath + '/default.json',JSON.stringify(configTemplate))
@@ -82,13 +96,21 @@ export default {
     // Export/import menu items
     var exportImportMenu = remote.Menu.buildFromTemplate([
       {
+        label: 'New profile...',
+        click: this.newProfile
+      },
+      {
+        label: 'Change profile...',
+        click: this.changeProfile
+      },
+      {
         label: 'Export profile...',
         click: this.exportProfile,
       },
       {
         label: 'Import profile...',
         click: this.importProfile,
-      }
+      },
     ])
 
     return {
@@ -96,13 +118,16 @@ export default {
       modSearchTerm: "",
       modSearchResults: [],
       modDetails: {},
-      jobQueue: [
-
-      ],
+      jobQueue: [],
       profileFolderWatcher: {},
-      exportImportMenu,
+      exportImportMenu: exportImportMenu,
       appVersion: remote.app.getVersion(),
-      changeLogs,
+      changeLogs: changeLogs,
+      refinedSearchFiltersTemplate: {
+        minecraftVersions,
+      },
+      refinedSearchFilters: {},
+      noResultFound: false,
     }
   },
 
@@ -165,6 +190,23 @@ export default {
     // Watch currently active profile folder
     if (this.config.activeProfile.modDir) {
       this.startProfileFolderWatcher()
+    }
+    // Update refined search filters
+    this.$eventHub.$on('updateSearchFilters', change => {
+      console.log(this.refinedSearchFilters);
+      for (let key in change) {
+        if (key == "mc_version" && change[key] == "activeProfileVersion") {
+          this.refinedSearchFilters[key] = this.config.activeProfile.version;
+          return;
+        }
+        this.refinedSearchFilters[key] = change[key]
+      }
+      this.modSearch();
+    })
+
+    // Default values for startup
+    this.refinedSearchFilters = {
+      mc_version: this.config.activeProfile.version
     }
 
     let jobQueueIndex = 0; // Job manager jobQueueIndex
@@ -262,18 +304,17 @@ export default {
 
   methods: {
     modSearch() {
+      console.log(this.refinedSearchFilters)
       this.$router.push('/search')
-      this.modSearchResults = [],
-      Curseforge.getMods({
-        mod_name: this.modSearchTerm,
-        mc_version: this.config.activeProfile.version,
-        page_size: 30,
-        }).then((mods) => {
+      this.modSearchResults = []
+      this.noResultFound = false
+      this.refinedSearchFilters.mod_name = this.modSearchTerm;
+      Curseforge.getMods(this.refinedSearchFilters).then((mods) => {
           if (mods.length > 0) {
             this.modSearchResults = mods;
           } else {
-            console.log("No result")
-            this.modSearchResults = [{name: 'noresult', id: 696969}];
+            this.modSearchResults = []
+            this.noResultFound = true;
           }
       });
     },
