@@ -252,23 +252,7 @@ export default {
 
     // New profile event
     this.$eventHub.$on('createProfile', name => {
-      let chosenDirectory = this.changeInstanceDirectory()
-      if (chosenDirectory) {
-        let configToSave = Object.assign({}, configTemplate)
-        configToSave.activeProfile.name = name
-
-        if (!fs.existsSync(AppPath + '/profiles/' + name + '.json')) {
-          fs.writeFileSync(AppPath +  '/profiles/' + name + '.json', JSON.stringify(configToSave))
-        } else {
-          remote.dialog.showErrorBox('Profile exists already', name + ' already exists!')
-          return;
-        }
-
-        this.$router.push('/')
-        this.changeProfile(name);
-      } else {
-        remote.dialog.showErrorBox('No folder chosen', 'You have to choose a folder for your new profile!')
-      }
+      this.createProfile(name)
     })
     
     // Change profile event
@@ -328,6 +312,7 @@ export default {
 
         if (!this.jobQueue[jobQueueIndex].lock && this.jobQueue[jobQueueIndex].progress != 1) {
           this.jobQueue[jobQueueIndex].lock = true // Don't work on it again if you're already downloading it
+
           setTimeout(() => {
             let job = this.jobQueue[jobQueueIndex];
 
@@ -344,60 +329,24 @@ export default {
               lastRecieved = meta.recieved
               lastTime = Date.now()
 
-              filesize = meta.totalSize
+              job.filesize = meta.totalSize
             }
 
             // Grab the mod file
-            job.mod.getFiles({newest_only: true, mc_version: this.config.activeProfile.version}).then((files) => {
-              let chosen = files[0]
-              
-              console.log(chosen);
-
-              job.file_name = chosen.file_name; // Show the file name
-
-              // Figure out any dependencies it might have
-              for (let dependency in chosen.mod_dependencies) {
-                Curseforge.getMods({mod_key: chosen.mod_dependencies[dependency]}).then((mods) => {
-                  this.addToJobQueue(mods[0], "Needed by " + job.name)
-                });
-              }
-
-              // Download the mod
-              chosen.download(this.config.activeProfile.instanceDirectory + '/mods' + "/" + chosen.file_name, {
-                override: true,
-                auto_check: true,
-              }, 
-              update).then(() => {
-                job.operation = "Complete"
-                job.auxiliary = size(filesize)
-                job.progress = 1
-
-                // Notify user
-                let downloadCompleteNotification = new Notification(job.name + " has finished downloading!", {
-                  body: "Total size: " + size(filesize)
-                })
-
-                downloadCompleteNotification.onclick = () => {
-                  remote.getCurrentWindow().maximize();
-                }
-
-                this.addToMods(job.mod, {reason: job.reason, file_name: chosen.file_name})
-                this.saveImportantToFile()
-
-              }).catch(err => {
-                job.progress = 1
-                job.auxiliary = err
-                job.operation = "Failed"
-
-                let downloadCompleteNotification = new Notification(job.name + " failed to download!")
-
-                downloadCompleteNotification.onclick = () => {
-                  remote.getCurrentWindow().maximize();
-                }
-              });
-            })
-            
+            let chosen;
+            if (job.file) {
+              console.log(job.file);
+              chosen = job.file
+              this.downloadModFile(chosen, job, update);
+            } else {
+              job.mod.getFiles({newest_only: true, mc_version: this.config.activeProfile.version}).then((files) => {
+                console.log(files[0])
+                chosen = files[0]
+                this.downloadModFile(chosen, job, update);
+              })
+            }
           }, 1);
+
         } else if (this.jobQueue[jobQueueIndex].progress == 1) {
           console.log("Weeee")
           jobQueueIndex++; 
@@ -410,6 +359,78 @@ export default {
   },
 
   methods: {
+    createProfile(name) {
+      let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
+
+      if (chosenDirectory) {
+        let configToSave = Object.assign({}, configTemplate)
+        configToSave.activeProfile.name = name
+        configToSave.activeProfile.instanceDirectory = chosenDirectory[0]
+
+        if (!fs.existsSync(AppPath + '/profiles/' + name + '.json')) {
+          fs.writeFileSync(AppPath +  '/profiles/' + name + '.json', JSON.stringify(configToSave))
+        } else {
+          remote.dialog.showErrorBox('Profile exists already', name + ' already exists!')
+          return false;
+        }
+
+        this.$router.push('/')
+        this.changeProfile(name);
+
+        return true
+      } else {
+        remote.dialog.showErrorBox('No folder chosen', 'You have to choose a folder for your new profile!')
+        return false
+      }
+    },
+
+    downloadModFile(chosen, job, update) {
+      console.log(chosen);
+
+      job.file_name = chosen.file_name; // Show the file name
+
+      // Figure out any dependencies it might have
+      for (let dependency in chosen.mod_dependencies) {
+        Curseforge.getMods({mod_key: chosen.mod_dependencies[dependency]}).then((mods) => {
+          this.addToJobQueue(mods[0], "Needed by " + job.name)
+        });
+      }
+
+      // Download the mod
+      chosen.download(this.config.activeProfile.instanceDirectory + '/mods' + "/" + chosen.file_name, {
+        override: true,
+        auto_check: true,
+      }, 
+      update).then(() => {
+        job.operation = "Complete"
+        job.auxiliary = size(job.filesize)
+        job.progress = 1
+
+        // Notify user
+        let downloadCompleteNotification = new Notification(job.name + " has finished downloading!", {
+          body: "Total size: " + size(job.filesize)
+        })
+
+        downloadCompleteNotification.onclick = () => {
+          remote.getCurrentWindow().maximize();
+        }
+
+        this.addToMods(job.mod, {reason: job.reason, file_name: chosen.file_name, md5: chosen.file_md5})
+        this.saveImportantToFile()
+
+      }).catch(err => {
+        job.progress = 1
+        job.auxiliary = err
+        job.operation = "Failed"
+
+        let downloadCompleteNotification = new Notification(job.name + " failed to download!")
+
+        downloadCompleteNotification.onclick = () => {
+          remote.getCurrentWindow().maximize();
+        }
+      });
+    },
+
     modSearch(term) {
       if (term) {
         this.refinedSearchFilters.mod_name = term;
@@ -454,6 +475,7 @@ export default {
           owner: mod.owner,
           blurb: mod.blurb,
           id: mod.id,
+          md5: payload.md5,
           managed: true,
           reason: payload.reason,
           file_name: payload.file_name,
@@ -472,7 +494,7 @@ export default {
       }
     },
 
-    addToJobQueue(mod, reason) {
+    addToJobQueue(mod, reason, file) {
       if (!this.config.activeProfile.instanceDirectory) {
         remote.dialog.showMessageBox({
           type: 'info',
@@ -498,17 +520,33 @@ export default {
         console.warn(mod.name + " already exists");
       }
 
-      this.jobQueue.push({
-        mod,
-        progress: 0,
-        operation: "Queued",
-        name: mod.name,
-        file_name: "...",
-        auxiliary: mod.file_size,
-        reason: reason || "User initiated",
-        key: Date.now(),
-        lock: false,
-      });
+      if (file) {
+        console.log("this is a file")
+        this.jobQueue.push({
+          mod,
+          progress: 0,
+          operation: "Queued",
+          name: mod.name,
+          file_name: "...",
+          auxiliary: mod.file_size,
+          reason: reason || "User initiated",
+          key: Date.now(),
+          lock: false,
+          file: file
+        })
+      } else {
+        this.jobQueue.push({
+          mod,
+          progress: 0,
+          operation: "Queued",
+          name: mod.name,
+          file_name: "...",
+          auxiliary: mod.file_size,
+          reason: reason || "User initiated",
+          key: Date.now(),
+          lock: false,
+        });
+      }
     },
 
     removeFromJobQueue(key) {
@@ -625,17 +663,77 @@ export default {
         let data = {}
         data.name = this.config.activeProfile.name
         data.mods = []
+        data.magiVersion = remote.app.getVersion()
+        data.gameVersion = this.config.activeProfile.version
+        data.timestamp = Date.now()
         for (let mod in this.config.activeProfile.mods) {
-          
+          data.mods.push({
+            id: this.config.activeProfile.mods[mod].id,
+            md5: this.config.activeProfile.mods[mod].md5
+          })
         }
 
-        fs.writeFileSync(savePath, data)
+        fs.writeFileSync(savePath, JSON.stringify(data))
       }
 
     },
 
     importProfile() {
+      let openPath = remote.dialog.showOpenDialog({properties: ['openFile']})
+      openPath = openPath[0]
 
+      let profileData;
+      try { 
+        profileData = JSON.parse(fs.readFileSync(openPath))
+        console.log(profileData)
+      } catch {
+        remote.dialog.showErrorBox('Invalid file', 'The JSON parse failed!')
+      }
+
+      if (profileData.magiVersion) {
+        if (profileData.magiVersion == remote.app.getVersion()) {
+          remote.dialog.showMessageBox({
+            type: 'info',
+            title: 'Wait a minute...',
+            message: 'Awesome! Please select a directory for ' + profileData.name + '.'
+          })
+        } else {
+          remote.dialog.showMessageBox({
+            type: 'error',
+            title: 'Wait a minute...',
+            message: 'You\'re on Magi ' + remote.app.getVersion() + ' while the profile you\'re trying to import was on ' + profileData.magiVersion + '. Magi will abort for safety.'
+          })
+          return
+        }
+        if (this.createProfile(profileData.name)) {
+
+          for (let mod in profileData.mods) {
+            setTimeout(() => {
+              console.log("Searching for mod " + profileData.mods[mod].id)
+              Curseforge.getMod(profileData.mods[mod].id).then(modResult => {
+                console.log("Found it! (" + modResult.name + ') Checking for matching hashes')
+                modResult.getFiles({mc_version: profileData.gameVersion}).then(files => {
+                  for (let file in files) {
+                    if (files[file].file_md5 === profileData.mods[mod].md5) {
+                      console.log("found a matching hatch! awesome!")
+                      this.addToJobQueue(modResult, profileData.name + ' import', files[file]);
+                    }
+                  }
+                })
+              })
+            }, 1)
+          }
+        } else {
+          console.warn("Profile creation failed, cancelling")
+        }
+      } else {
+        remote.dialog.showMessageBox({
+          type: 'error',
+          title: 'Wait a minute...',
+          message: 'The JSON file you\'re trying to import doesn\'t seem to be a Magi export file! Magi will cancel the operation.'
+        })
+        return
+      }
     },
 
     minimize() {
