@@ -2,6 +2,11 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Search from '../views/Search.vue'
+import ModDetails from '../views/ModDetails.vue'
+import NewProfile from '../views/NewProfile.vue'
+import ChangeProfile from '../views/ChangeProfile.vue'
+import WelcomeCard from '../components/WelcomeCard.vue'
+import ConfigureProfile from '../views/ConfigureProfile.vue'
 
 Vue.use(VueRouter)
 
@@ -19,7 +24,27 @@ Vue.use(VueRouter)
   {
     path: '/modDetails',
     name: 'Mod Details',
-    component: () => import('../views/ModDetails.vue'),
+    component: ModDetails,
+  },
+  {
+    path: '/newProfile',
+    name: 'New Profile',
+    component: NewProfile,
+  },
+  {
+    path: '/changeProfile',
+    name: 'Change Profile',
+    component: ChangeProfile,
+  },
+  {
+    path: '/configureProfile',
+    name: 'Configure Profile',
+    component: ConfigureProfile,
+  },
+  {
+    path: '/Welcome',
+    name: 'Welcome',
+    component: WelcomeCard
   }
 ]
 

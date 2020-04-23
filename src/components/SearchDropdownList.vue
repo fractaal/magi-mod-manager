@@ -2,7 +2,7 @@
   <div>
     <label style="font-size: 14px; margin-right: 10px;" :for="label">{{label}}</label>
     <select @change="update" v-model="selectedChoice" :id="label" :selected="selectedChoice">
-      <option v-if="type == 'mc_version'" value="activeProfileVersion">Active profile version</option>
+      <option v-if="type == 'mc_version' && purpose == 'search'" value="activeProfileVersion">Active profile version</option>
       <option v-if="type == 'category'" value="">None</option>
       <option v-for="item in displayList" :key="item">{{item}}</option>
     </select>
@@ -18,6 +18,7 @@
       activeProfileVersion: String,
       selected: String,
       label: String,
+      purpose: String,
     },
 
     data() {
@@ -29,9 +30,15 @@
 
     methods: {
       update() {
-        this.$eventHub.$emit('updateSearchFilters', {
-          [this.type]: this.selectedChoice
-        })
+        if (this.purpose == 'search') {
+          this.$eventHub.$emit('updateSearchFilters', {
+            [this.type]: this.selectedChoice
+          })
+        } else if (this.purpose == 'config') {
+          this.$parent.$emit('change', {
+            [this.type]: this.selectedChoice
+          }, this.label)
+        }
       }
     },
 
@@ -54,16 +61,21 @@
 
 <style scoped>
 select {
-  outline: none;
+  cursor: pointer;
+  padding: .75em;
+  margin-left: 20px;
   border-radius: 10px;
-  padding: 10px;
-  background-color: rgba(0,0,0,0);
-  width: 15em;
-  font-size: 14px;
+  background-color: rgba(0,0,0,.1);
+  border: 0px;
+  font-size: 1em;
+  outline: none;
+  /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
+  color: #fff;
 }
 
 select option {
   font-size: 1.5em;
   background-color: rgba(0,0,0,1);
+  padding: 10px;
 }
 </style>

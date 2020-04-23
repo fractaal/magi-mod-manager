@@ -1,28 +1,43 @@
 <template>
-  <div id="app" style="overflow: hidden">
-    <div style="display: flex; padding: 20px;" class="topBarColor">
-      <span>
-        <img src="./assets/100px.png" style="width: 60px; height: 60px; cursor: pointer;" v-on:click="() => {exportImportMenu.popup()}">
-      </span>
-      <span style="margin-left:10px;">
-        <h3 class="white-text">{{config.activeProfile.name}}</h3>
-        <p class="white-text" style="font-size: 14px;">{{config.activeProfile.mods.length}} mods active</p>
-        <p class="white-text" style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
-      </span>
-      <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
-      <button class="input" v-on:click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
-      <form v-on:submit.prevent="modSearch" style="position: relative;">
-        <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="100" placeholder="Search...">
-        <input class="searchButton" type="submit" hidden>
-        <i class="fa fa-search" style="color: #fff; position:absolute; top: 18px; right: 15px;"></i>
-      </form>
+  <div id="app" style="overflow: hidden;">
+    <div class="topBarColor">
+      <div style="display: flex; flex-direction: row; margin-bottom: -20px; -webkit-app-region: drag;">
+        <p style="padding-top: 5px; padding-left: 10px; font-size: 14px;">Magi {{appVersion}}</p>
+        <span style="margin-left: auto;">
+          <button v-on:click="minimize" class="titleBarButton" style="position: relative; top: 0px; right: 1px;"><i class="fa fa-window-minimize"></i></button>
+          <button v-on:click="maximize" class="titleBarButton" style="position: relative; top: 0px; right: 1px;"><i class="fa fa-window-maximize"></i></button>
+          <button v-on:click="close" class="titleBarButton" style="position: relative; top: 0px; right: 1px;"><i class="fa fa-times fa-lg"></i></button>
+        </span>
+      </div>
+      <div style="display: flex; padding: 20px;">
+        <span>
+          <img src="./assets/100px.png" style="width: 60px; height: 60px; cursor: pointer;" v-on:click="showMessageBox('Brought to you by Ben with love')">
+        </span>
+        <span style="margin-left:10px;">
+          <h3 class="white-text">{{config.activeProfile.name}}</h3>
+          <p class="white-text" style="font-size: 14px;">{{config.activeProfile.mods.length}} mods active</p>
+          <p class="white-text" style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
+        </span>
+        <button class="input" @click="() => exportImportMenu.popup()" style="height: 3.5em;"><i class="fa fa-cog fa-lg"></i></button>
+        <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
+        <button class="input" @click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
+        <TextBox :onSubmit="modSearch" placeholder="Search..." icon="fa-search"/>
+        <!--
+        <form v-on:submit.prevent="modSearch" style="position: relative;">
+          <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
+          <input class="searchButton" type="submit" hidden>
+          <i class="fa fa-search" style="color: #fff; position:absolute; top: 18px; right: 15px;"></i>
+        </form>
+        -->
+      </div>
     </div>
     <div class="wrapper" style="overflow:hidden;">
       <div class="routerViewColor">
         <transition name="fade">
           <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
                         :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
-                        :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"/>
+                        :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"
+                        :profiles="profiles" :config="this.config" />
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue"></JobQueue>
@@ -39,8 +54,16 @@ const { remote } = require('electron') // dialogs and stuff
 const size = require('filesize').partial({standard: "iec"}) // Filesize formatting
 
 import JobQueue from './components/JobQueue'
+import TextBox from './components/TextBox'
 
 const AppPath = remote.app.getPath('userData')
+
+const appSettingsTemplate = {
+  activeProfile: 'Default',
+  screenSizeX: '1366',
+  screenSizeY: '768',
+  wasWelcomeScreenDisplayed: false,
+}
 
 const configTemplate = {
   activeProfile: {
@@ -50,20 +73,22 @@ const configTemplate = {
     version: "1.12.2",
   }
 }
+
 export default {
   components: {
-    JobQueue
+    JobQueue,
+    TextBox
   },
 
   data() {
     // Get changeLogs
     let changeLogs = [
-      "Download notifications!",
-      "Custom profile functionality!",
-      "Import and export profiles!",
-      "Color redesign!",
-      "Refined search!",
-      "Bug fixes (Blank views, auto-update, distorted icons)!"
+      "Download notifications",
+      "Custom profile functionality",
+      "Import and export profiles",
+      "Color scheme redesign",
+      "Refined search",
+      "Bug fixes (Blank views, auto-update, distorted icons)"
     ]
 
     // Get versions
@@ -78,25 +103,35 @@ export default {
     }
 
     // Initialize this if the app has no existing configuration (first time run)
-    if (!fs.existsSync(AppPath + '/default.json')) {
-      fs.writeFileSync(AppPath + '/default.json',JSON.stringify(configTemplate))
+    if (!fs.existsSync(AppPath + '/profiles')) {
+      fs.mkdirSync(AppPath + '/profiles')
     }
 
-    let config = JSON.parse(fs.readFileSync(AppPath + '/default.json'))
+    if (!fs.existsSync(AppPath + '/appSettings.json')) { // Profile-agnostic app settings
+      fs.writeFileSync(AppPath + '/appSettings.json', JSON.stringify(appSettingsTemplate))
+    }
 
+    let appSettings = JSON.parse(fs.readFileSync(AppPath + '/appSettings.json'))
+
+    if (!fs.existsSync(AppPath + '/profiles/' + appSettings.activeProfile + '.json')) {
+      fs.writeFileSync(AppPath +  '/profiles/' + appSettings.activeProfile + '.json', JSON.stringify(configTemplate))
+    }
+
+    let config = JSON.parse(fs.readFileSync(AppPath + '/profiles/' + appSettings.activeProfile + '.json'))
+    
     // Export/import menu items
     var exportImportMenu = remote.Menu.buildFromTemplate([
       {
         label: 'New profile...',
-        click: this.newProfile
+        click: () => {this.$router.push('/newProfile')}
       },
       {
         label: 'Configure profile...',
-        click: this.configureProfile,
+        click: () => {this.$router.push('/configureProfile')}
       },
       {
         label: 'Change profile...',
-        click: this.changeProfile
+        click: () => {this.$router.push('/changeProfile')}
       },
       {
         type: 'separator'
@@ -109,15 +144,25 @@ export default {
         label: 'Import profile...',
         click: this.importProfile,
       },
+      {
+        type: 'separator',
+      },
+      {
+        label: 'About',
+        click: () => {this.$router.push('/Welcome')}
+      }
     ])
 
     return {
       config: config,
+      appSettings: appSettings,
+      profiles: [],
       modSearchTerm: "",
       modSearchResults: [],
       modDetails: {},
       jobQueue: [],
-      profileFolderWatcher: {},
+      profileFolderWatcher: null,
+      profileListWatcher: null,
       exportImportMenu: exportImportMenu,
       appVersion: remote.app.getVersion(),
       changeLogs: changeLogs,
@@ -129,12 +174,19 @@ export default {
         category: ''
       },
       noResultFound: false,
-      computedScreenWidth: remote.getCurrentWindow().getSize()[0],
-      computedScreenHeight: remote.getCurrentWindow().getSize()[1]
     }
   },
 
   created() { 
+    // Read profiles
+    this.profiles = this.readProfiles()
+
+    // Welcome screen
+    if (!this.appSettings.wasWelcomeScreenDisplayed) {
+      this.$router.push('/Welcome')
+      this.appSettings.wasWelcomeScreenDisplayed = true;
+    }
+
     // Delete mod event
     this.$eventHub.$on('deleteMod', (pickedMod) => {
       
@@ -153,7 +205,7 @@ export default {
           this.config.activeProfile.mods.splice(mod, 1);
         }
       }
-        this.saveConfigToFile()
+        this.saveImportantToFile()
     });
 
     // Disable mod event
@@ -165,7 +217,7 @@ export default {
         fs.renameSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled', this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name)
           pickedMod.enabled = true
       }
-      this.saveConfigToFile()
+      this.saveImportantToFile()
     });
 
     // View mod details event
@@ -190,11 +242,6 @@ export default {
       this.searchHome();
     });
 
-    // Watch currently active profile folder
-    if (this.config.activeProfile.instanceDirectory) {
-      this.startProfileFolderWatcher()
-    }
-
     // Update refined search filters
     this.$eventHub.$on('updateSearchFilters', change => {
       for (let key in change) {
@@ -202,6 +249,72 @@ export default {
       }
       this.modSearch();
     })
+
+    // New profile event
+    this.$eventHub.$on('createProfile', name => {
+      let chosenDirectory = this.changeInstanceDirectory()
+      if (chosenDirectory) {
+        let configToSave = Object.assign({}, configTemplate)
+        configToSave.activeProfile.name = name
+
+        if (!fs.existsSync(AppPath + '/profiles/' + name + '.json')) {
+          fs.writeFileSync(AppPath +  '/profiles/' + name + '.json', JSON.stringify(configToSave))
+        } else {
+          remote.dialog.showErrorBox('Profile exists already', name + ' already exists!')
+          return;
+        }
+
+        this.$router.push('/')
+        this.changeProfile(name);
+      } else {
+        remote.dialog.showErrorBox('No folder chosen', 'You have to choose a folder for your new profile!')
+      }
+    })
+    
+    // Change profile event
+    this.$eventHub.$on('changeProfile', name => {
+      this.changeProfile(name);
+      this.$router.push('/')
+    })
+
+    // Configure profile event 
+    this.$eventHub.$on('configureProfile', changes => {
+      for (let change in changes) {
+        console.log(
+          "Updating config key " + change + 
+          " from old value (" + this.config.activeProfile[change] + 
+          ") to the new one (" + changes[change] + ")")
+
+        if (change == 'name') {
+          fs.renameSync(
+            AppPath + '/profiles/' + this.config.activeProfile.name + '.json',
+            AppPath + '/profiles/' + changes[change] + '.json' // change the name in advance so that changeProfile doesn't break
+            )
+        }
+
+        this.config.activeProfile[change] = changes[change];
+      }
+
+      this.changeProfile(this.config.activeProfile.name)
+    })
+
+    // Watch currently active profile folder
+    if (this.config.activeProfile.instanceDirectory) {
+      this.startProfileFolderWatcher()
+    } else {
+      console.warn("Current profile has no directory set to it! Profile folder won't start!")
+    }
+
+    // Watch profile folder
+    if (!this.profileListWatcher) {
+      console.log("Starting profile list watcher")
+      this.profileListWatcher = fs.watch(AppPath + '/profiles', () => {
+        this.profiles = this.readProfiles()
+      })
+    } else {
+      console.warn("Profile list watcher already exists")
+    };
+    
 
 
     let jobQueueIndex = 0; // Job manager jobQueueIndex
@@ -269,7 +382,7 @@ export default {
                 }
 
                 this.addToMods(job.mod, {reason: job.reason, file_name: chosen.file_name})
-                this.saveConfigToFile()
+                this.saveImportantToFile()
 
               }).catch(err => {
                 job.progress = 1
@@ -294,16 +407,19 @@ export default {
     } else {
       console.warn("Job manager already exists!")
     }
-
   },
 
   methods: {
-    modSearch() {
+    modSearch(term) {
+      if (term) {
+        this.refinedSearchFilters.mod_name = term;
+      } else {
+        this.refinedSearchFilters.mod_name = this.modSearchTerm;
+      }
       console.log(this.refinedSearchFilters)
       this.$router.push('/search')
       this.modSearchResults = []
       this.noResultFound = false
-      this.refinedSearchFilters.mod_name = this.modSearchTerm;
       this.refinedSearchFilters.mc_version = 
         this.refinedSearchFilters.mc_version == "activeProfileVersion" ? this.config.activeProfile.version : this.refinedSearchFilters.mc_version
       Curseforge.getMods(this.refinedSearchFilters).then((mods) => {
@@ -363,7 +479,7 @@ export default {
           title: 'Select an instance directory',
           message: 'Before you can download any mods, select a Minecraft instance directory.',
         })
-        if (!this.changeInstanceDirectory) {
+        if (!this.changeInstanceDirectory()) {
         remote.dialog.showMessageBox({
           type: 'error',
           title: 'No directory selected',
@@ -405,7 +521,6 @@ export default {
 
     changeInstanceDirectory() {
       let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
-      console.log(chosenDirectory);
       if (chosenDirectory) {
         this.config.activeProfile.instanceDirectory = chosenDirectory[0]
         this.startProfileFolderWatcher()
@@ -415,9 +530,10 @@ export default {
       }
     },
 
-    saveConfigToFile() {
+    saveImportantToFile() {
       console.log("Saving to file");
-      fs.writeFile(AppPath + '/default.json', JSON.stringify(this.config), () => {console.log("Asynchronous write complete")})
+      fs.writeFileSync(AppPath +  '/profiles/' + this.config.activeProfile.name + '.json', JSON.stringify(this.config))
+      fs.writeFileSync(AppPath + '/appSettings.json', JSON.stringify(this.appSettings))
     },
 
     modExistsInProfile(_mod) {
@@ -439,6 +555,16 @@ export default {
     },
 
     startProfileFolderWatcher() {
+      if (this.profileFolderWatcher) {
+        console.warn("Profile folder watcher already active")
+        return;
+      }
+      if (!fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods')) {
+        fs.mkdirSync(this.config.activeProfile.instanceDirectory + '/mods')
+      }
+
+      console.log("Starting new profile folder watcher for " + this.config.activeProfile.name)
+
       this.profileFolderWatcher = fs.watch(this.config.activeProfile.instanceDirectory + '/mods', (eventType, filename) => {
         console.log(eventType, filename)
         if (eventType == "rename") {
@@ -475,15 +601,71 @@ export default {
     }, 
 
     stopProfileFolderWatcher() {
-      this.profileFolderWatcher().close()
+      if (this.profileFolderWatcher) {
+        delete this.profileFolderWatcher
+      }
+    },
+
+    changeProfile(name) {
+      this.saveImportantToFile() // Save the things that need to be persistent accross profiles
+      this.stopProfileFolderWatcher() // We want to change the active directory therefore we stop the watcher
+
+      console.log("Switching from " + this.appSettings.activeProfile + " to " + name)
+      this.appSettings.activeProfile = name;
+      this.config = JSON.parse(fs.readFileSync(AppPath + '/profiles/' + this.appSettings.activeProfile + '.json'))
+
+      this.startProfileFolderWatcher()
+      this.saveImportantToFile()
     },
 
     exportProfile() {
+      let savePath = remote.dialog.showSaveDialog({});
+
+      if (savePath) {
+        let data = {}
+        data.name = this.config.activeProfile.name
+        data.mods = []
+        for (let mod in this.config.activeProfile.mods) {
+          
+        }
+
+        fs.writeFileSync(savePath, data)
+      }
 
     },
 
     importProfile() {
 
+    },
+
+    minimize() {
+      remote.getCurrentWindow().minimize()
+    },
+
+    maximize() {
+      const window = remote.getCurrentWindow()
+      if (window.isMaximized()) {
+        window.unmaximize()
+      } else {
+        window.maximize()
+      }
+    },
+
+    close() {
+      this.saveImportantToFile();
+      remote.getCurrentWindow().close();
+    },
+
+    showMessageBox(message) {
+      remote.dialog.showMessageBox({
+        type: 'info',
+        title: 'Hi!',
+        message: message
+      })
+    },
+
+    readProfiles() {
+      return fs.readdirSync(AppPath + '/profiles').map(value => {return path.basename(value, '.json')});
     }
   }
 }

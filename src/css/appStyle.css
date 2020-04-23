@@ -4,6 +4,7 @@
   font-family: 'Manrope';
   transition: 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
   color: #fff;
+  user-select: none;
 }
 
 .progress {
@@ -144,37 +145,20 @@
   color: #fff;
 }
 
-.textinput {
-  cursor: text;
-  padding: .75em;
-  margin-left: 20px;
-  border-radius: 10px;
-  background-color: rgba(0,0,0,.1);
-  border: 0px;
-  font-size: 1em;
-  outline: none;
-  /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
-  color: #fff;
+.input-highlight {
+  background-color: rgba(122,214,82,.1)
 }
 
-.textinput::placeholder {
-  color: rgba(255,255,255,.5);
+.input-not-round:hover {
+  padding-left: 30px;
+  padding-right: 30px;
+  background-color: rgba(0,0,0,.1)
 }
 
 .input:hover {
   padding-left: 20px;
   padding-right: 20px;
   box-shadow: 0px 0px 25px 0px rgba(0,0,0,0.1);
-}
-
-.textinput:hover {
-  padding-left: 20px;
-  padding-right: 20px;
-  box-shadow: inset 0px 0px 10px 0px rgba(0,0,0,0.1);
-}
-
-.textinput:hover::placeholder {
-  color: rgba(255,255,255,1);
 }
 
 .wrapper {
@@ -189,8 +173,8 @@
 }
 
 .topBarColor {
-  background: rgb(189,90,255);
-  background: linear-gradient(90deg, rgba(189,90,255,1) 0%, rgba(255,95,95,1) 52%, rgba(255,201,125,1) 100%);
+  background: rgb(255,95,136);
+  background: linear-gradient(90deg, rgba(255,95,136,1) 0%, rgba(255,201,125,1) 100%);
 }
 
 .routerViewColor {
@@ -274,4 +258,33 @@ no-style-type {
 .gap {
   margin-left: 10px;
   margin-right: 10px;
+}
+
+.titleBarButton {
+  -webkit-app-region: no-drag;
+  outline: none;
+  background-color: rgba(255,255,255,0);
+  border: none;
+  padding: 10px 20px 10px 20px;
+}
+
+.titleBarButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.centered {
+  height: 75vh; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  align-items: center;
+}
+
+.centered-no-justify {
+  height: 75vh; 
+  width: 50vw;
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  align-items: flex-end;
 }

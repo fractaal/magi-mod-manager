@@ -2,8 +2,8 @@
   <div>
     <span style="display: flex;">
       <h1 class="gap">Search</h1>
-      <SearchDropdownList class="gap" label="Version" :list="refinedSearchFiltersTemplate.mc_version" type="mc_version" :activeProfileVersion="activeProfileVersion" :selected="refinedSearchFilters.mc_version"/>
-      <SearchDropdownList class="gap" label="Category" :list="category" type="category" :selected="refinedSearchFilters.category"/>
+      <SearchDropdownList class="gap" purpose="search" label="Version" :list="refinedSearchFiltersTemplate.mc_version" type="mc_version" :activeProfileVersion="activeProfileVersion" :selected="refinedSearchFilters.mc_version"/>
+      <SearchDropdownList class="gap" purpose="search" label="Category" :list="category" type="category" :selected="refinedSearchFilters.category"/>
     </span>
     <br>
     <div style="max-height: 85vh; overflow-y: auto;">

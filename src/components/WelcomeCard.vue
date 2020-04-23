@@ -1,10 +1,11 @@
 <template>
-  <div style="height: 75vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+  <div class="centered">
     <h1 style="font-size: 50px;">Welcome to Magi {{appVersion}}!</h1>
     <br>
-    <ul>
-      <li style="font-weight: lighter; font-size: 20px;" v-for="changeLog in changeLogs" :key="changeLog">{{changeLog}}</li>
-    </ul>
+    <h2>You now have</h2>
+    <transition name="fade">
+      <h1 :key="scroller">{{changeLogs[scroller]}}</h1>
+    </transition>
     <br>
     <br>
     <br>
@@ -18,6 +19,38 @@
     props: {
       appVersion: String,
       changeLogs: Array,
+    },
+    data() {
+      return {
+        scrollerFunction: '',
+        scroller: 0
+      }
+    },
+    created() {
+      this.scrollerFunction = setInterval(() => {
+        this.scroller++;
+        if (this.scroller == this.changeLogs.length - 1) {
+          this.scroller = 0
+        }
+      }, 1500)
+    },
+    destroyed() {
+      delete this.scrollerFunction;
     }
   }
 </script>
+
+<style scoped>
+.fade-enter-active {
+  transition: opacity .25s;
+}
+
+.fade-leave-active {
+  transition: opacity 0;
+  position: absolute;
+}
+
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+</style>

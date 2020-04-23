@@ -29,3 +29,9 @@ export default {
   props: ["modDetails"]
 }
 </script>
+
+<style scoped>
+  p {
+    user-select: text; 
+  }
+</style>

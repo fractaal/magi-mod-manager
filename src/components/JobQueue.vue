@@ -21,3 +21,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.jobViewColor {
+  resize: horizontal;
+}
+</style>
