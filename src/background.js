@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, dialog } from 'electron'
 import {
   createProtocol,
   installVueDevtools
@@ -12,16 +12,28 @@ const { autoUpdater } = require('electron-updater')
 let win
 autoUpdater.checkForUpdatesAndNotify()
 
-autoUpdater.on('error', () => {
-  new Notification('Update failed!')
+autoUpdater.on('error', error => {
+  dialog.showMessageBox({
+    type: 'error',
+    title: 'Update failed',
+    message: error
+  })
 })
 
 autoUpdater.on('update-available', () => {
-  new Notification('Update available!')
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'A new update is available for Magi!',
+    message: 'I\'ll automatically download it for you...'
+  })
 })
 
 autoUpdater.on('update-downloaded', () => {
-  new Notification('Update downloaded!')
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'New update downloaded!',
+    message: 'The next time you start up Magi, I\'ll automatically install the update.'
+  })
 })
 
 // Scheme must be registered before the app is ready

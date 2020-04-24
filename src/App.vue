@@ -167,11 +167,13 @@ export default {
       appVersion: remote.app.getVersion(),
       changeLogs: changeLogs,
       refinedSearchFiltersTemplate: {
-        mc_version: minecraftVersions,
+        gameVersion: minecraftVersions,
       },
       refinedSearchFilters: {
-        mc_version: 'activeProfileVersion',
-        category: ''
+        gameVersion: 'activeProfileVersion',
+        category: '',
+        pageSize: 10,
+        index: 1,
       },
       noResultFound: false,
     }
@@ -223,8 +225,11 @@ export default {
     // View mod details event
     this.$eventHub.$on('viewModDetails', (pickedMod) => {
       console.log(pickedMod)
-      this.modDetails = pickedMod;
-      this.$router.push('/modDetails');
+      pickedMod.getDescription().then(description => {
+        this.modDetails = pickedMod
+        this.modDetails.description = description;
+        this.$router.push('/modDetails');
+      })
     });
 
     // Start download event
@@ -339,7 +344,7 @@ export default {
               chosen = job.file
               this.downloadModFile(chosen, job, update);
             } else {
-              job.mod.getFiles({newest_only: true, mc_version: this.config.activeProfile.version}).then((files) => {
+              job.mod.getFiles({newest_only: true, gameVersion: this.config.activeProfile.version}).then((files) => {
                 console.log(files[0])
                 chosen = files[0]
                 this.downloadModFile(chosen, job, update);
@@ -433,16 +438,16 @@ export default {
 
     modSearch(term) {
       if (term) {
-        this.refinedSearchFilters.mod_name = term;
+        this.refinedSearchFilters.searchFilter = term;
       } else {
-        this.refinedSearchFilters.mod_name = this.modSearchTerm;
+        this.refinedSearchFilters.searchFilter = this.modSearchTerm;
       }
       console.log(this.refinedSearchFilters)
       this.$router.push('/search')
       this.modSearchResults = []
       this.noResultFound = false
-      this.refinedSearchFilters.mc_version = 
-        this.refinedSearchFilters.mc_version == "activeProfileVersion" ? this.config.activeProfile.version : this.refinedSearchFilters.mc_version
+      this.refinedSearchFilters.gameVersion = 
+        this.refinedSearchFilters.gameVersion == "activeProfileVersion" ? this.config.activeProfile.version : this.refinedSearchFilters.gameVersion
       Curseforge.getMods(this.refinedSearchFilters).then((mods) => {
           if (mods.length > 0) {
             this.modSearchResults = mods;
@@ -450,6 +455,7 @@ export default {
             this.modSearchResults = []
             this.noResultFound = true;
           }
+          console.warn(mods)
       });
     },
 
@@ -459,8 +465,7 @@ export default {
       if (this.modSearchResults.length == 0) {
         this.modSearchResults = [],
         Curseforge.getMods({
-          mod_name: "",
-          mc_version: this.config.activeProfile.version,
+          gameVersion: this.config.activeProfile.version,
           }).then((mods) => {
             this.modSearchResults = mods;
         });
@@ -712,7 +717,7 @@ export default {
               console.log("Searching for mod " + profileData.mods[mod].id)
               Curseforge.getMod(profileData.mods[mod].id).then(modResult => {
                 console.log("Found it! (" + modResult.name + ') Checking for matching hashes')
-                modResult.getFiles({mc_version: profileData.gameVersion}).then(files => {
+                modResult.getFiles({gameVersion: profileData.gameVersion}).then(files => {
                   for (let file in files) {
                     if (files[file].file_md5 === profileData.mods[mod].md5) {
                       console.log("found a matching hatch! awesome!")

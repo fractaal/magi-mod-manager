@@ -2,7 +2,7 @@
   <div>
     <label style="font-size: 14px; margin-right: 10px;" :for="label">{{label}}</label>
     <select @change="update" v-model="selectedChoice" :id="label" :selected="selectedChoice">
-      <option v-if="type == 'mc_version' && purpose == 'search'" value="activeProfileVersion">Active profile version</option>
+      <option v-if="type == 'gameVersion' && purpose == 'search'" value="activeProfileVersion">Active profile version</option>
       <option v-if="type == 'category'" value="">None</option>
       <option v-for="item in displayList" :key="item">{{item}}</option>
     </select>
@@ -44,7 +44,7 @@
 
     created() {
       console.log(this.selected)
-      if (this.type == "mc_version") {
+      if (this.type == "gameVersion") {
         for (let version in this.list.versions) {
           if (this.list.versions[version].type === "release") {
             this.displayList.push(this.list.versions[version].id)

@@ -5,7 +5,7 @@
       <button style="margin-left:20px; margin-right:20px; margin-bottom: 20px;" class="input-not-round" @click="$router.go(-1)">Go Back</button>
       <div style="display: flex;">
         <div style="margin-right: 1em;">
-          <img :src="modDetails.logo" style="width: auto; height: auto;">
+          <img :src="modDetails.logo.thumbnailUrl" style="width: auto; height: auto;">
         </div>
         <div>
           <h1>{{modDetails.name}}</h1>
