@@ -21,7 +21,7 @@
         <button class="input" @click="() => exportImportMenu.popup()" style="height: 3.5em;"><i class="fa fa-cog fa-lg"></i></button>
         <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
         <button class="input" @click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
-        <TextBox :onSubmit="modSearch" placeholder="Search..." icon="fa-search"/>
+        <TextBox :onSubmit="(input) => {this.refinedSearchFilters.index = 1; modSearch(input)}" placeholder="Search..." icon="fa-search"/>
         <!--
         <form v-on:submit.prevent="modSearch" style="position: relative;">
           <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
@@ -83,12 +83,8 @@ export default {
   data() {
     // Get changeLogs
     let changeLogs = [
-      "Download notifications",
-      "Custom profile functionality",
-      "Import and export profiles",
-      "Color scheme redesign",
-      "Refined search",
-      "Bug fixes (Blank views, auto-update, distorted icons)"
+      "New and improved job manager",
+      "Better search"
     ]
 
     // Get versions
@@ -171,7 +167,7 @@ export default {
       },
       refinedSearchFilters: {
         gameVersion: 'activeProfileVersion',
-        category: '',
+        categories: '',
         pageSize: 10,
         index: 1,
       },
@@ -225,10 +221,11 @@ export default {
     // View mod details event
     this.$eventHub.$on('viewModDetails', (pickedMod) => {
       console.log(pickedMod)
+      this.modDetails = 'load'
+      this.$router.push('/modDetails');
       pickedMod.getDescription().then(description => {
         this.modDetails = pickedMod
         this.modDetails.description = description;
-        this.$router.push('/modDetails');
       })
     });
 
@@ -437,15 +434,18 @@ export default {
     },
 
     modSearch(term) {
-      if (term) {
-        this.refinedSearchFilters.searchFilter = term;
-      } else {
-        this.refinedSearchFilters.searchFilter = this.modSearchTerm;
-      }
+
+        this.modSearchTerm = term
+
       console.log(this.refinedSearchFilters)
-      this.$router.push('/search')
+      if (this.$router.currentRoute.path !== '/search') {
+        console.log("we")
+        this.$router.push('/search')
+      }
+      
       this.modSearchResults = []
       this.noResultFound = false
+      this.refinedSearchFilters.searchFilter = this.modSearchTerm
       this.refinedSearchFilters.gameVersion = 
         this.refinedSearchFilters.gameVersion == "activeProfileVersion" ? this.config.activeProfile.version : this.refinedSearchFilters.gameVersion
       Curseforge.getMods(this.refinedSearchFilters).then((mods) => {
@@ -455,20 +455,16 @@ export default {
             this.modSearchResults = []
             this.noResultFound = true;
           }
-          console.warn(mods)
       });
     },
 
     searchHome() {
-      console.log(this.modSearchResults.length)
       this.$router.push('/search')
-      if (this.modSearchResults.length == 0) {
+      if (this.modSearchResults.length === 0) {
         this.modSearchResults = [],
-        Curseforge.getMods({
-          gameVersion: this.config.activeProfile.version,
-          }).then((mods) => {
-            this.modSearchResults = mods;
-        });
+        this.refinedSearchFilters.gameVersion = 
+          this.refinedSearchFilters.gameVersion == "activeProfileVersion" ? this.config.activeProfile.version : this.refinedSearchFilters.gameVersion
+        Curseforge.getMods(this.refinedSearchFilters).then((mods) => {this.modSearchResults = mods});
       }
     },
 

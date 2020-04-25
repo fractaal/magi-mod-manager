@@ -10,7 +10,7 @@
       <br>
       <DirectoryChooser label="Profile Directory" :initialValue="config.activeProfile.instanceDirectory" placeholder="Directory here..."/>
       <br>
-      <DropdownList type="mc_version" label="Minecraft Version" purpose="config" :list="refinedSearchFiltersTemplate.mc_version" :selected="config.activeProfile.version"/>
+      <DropdownList type="gameVersion" label="Minecraft Version" purpose="config" :list="refinedSearchFiltersTemplate.gameVersion" :selected="config.activeProfile.version"/>
       <!--<TextBox label="Profile Version" :initialValue="config.activeProfile.version" placeholder="Version here..."/>-->
       <br>
       <div style="display: flex;">
@@ -52,7 +52,7 @@
     created() {
       this.$on('change', (userInput, who) => {
         if (who == "Minecraft Version") {
-          this.newConfig.version = userInput.mc_version
+          this.newConfig.version = userInput.gameVersion
         } else if (who == "Profile Directory") {
           this.newConfig.instanceDirectory = userInput
         } else if (who == "Profile Name") {

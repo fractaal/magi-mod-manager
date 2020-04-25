@@ -29,7 +29,7 @@
     created() {
       this.scrollerFunction = setInterval(() => {
         this.scroller++;
-        if (this.scroller == this.changeLogs.length - 1) {
+        if (this.scroller == this.changeLogs.length) {
           this.scroller = 0
         }
       }, 1500)

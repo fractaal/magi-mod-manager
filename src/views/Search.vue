@@ -3,19 +3,23 @@
     <span style="display: flex;">
       <h1 class="gap">Search</h1>
       <SearchDropdownList class="gap" purpose="search" label="Version" :list="refinedSearchFiltersTemplate.gameVersion" type="gameVersion" :activeProfileVersion="activeProfileVersion" :selected="refinedSearchFilters.gameVersion"/>
-      <SearchDropdownList class="gap" purpose="search" label="Category" :list="category" type="category" :selected="refinedSearchFilters.category"/>
+      <SearchDropdownList class="gap" purpose="search" label="Category" :list="categories" type="categories" :selected="refinedSearchFilters.categories"/>
     </span>
     <br>
-    <div style="max-height: 75vh; overflow-y: auto;">
+    <div style="max-height: 65vh; overflow-y: auto;">
       <span v-if="modSearchResults.length == 0 && !noResultFound">
         <div v-for="index in 10" :key="index" class="card shimmer" style="height: 5em;"></div>
       </span>
       <transition name="name">
         <div v-if="noResultFound" style="height: 75vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <h1>We couldn't find that mod. Try searching for something else! :(</h1>
+          <h1>Curseforge returned no results :(</h1>
+          <h1>Maybe going back a page or searching for something else?</h1>
         </div>
       </transition>
         <div v-if="!noResultFound">
+          <transition name="fade">
+            <h2 v-if="modSearchTerm">Results for {{modSearchTerm}}</h2>
+          </transition>
           <transition-group name="fade">
             <div v-for="modSearchResult in modSearchResults" :key="modSearchResult.id" class="card" style="display: grid; grid-template-columns: 3fr 1fr;">
               <div style="display: flex;" v-on:click="$eventHub.$emit('viewModDetails', modSearchResult)" class=" animate-hover">
@@ -34,6 +38,11 @@
           </transition-group>
         </div>
     </div>
+    <span style="display: flex; justify-content: center; align-items: center; height: 75px;">
+      <button v-if="!(this.refinedSearchFilters.index === 1)" @click="incrementPageNum(-1)" class="input-not-round"><i class="fa fa-arrow-left fa"></i></button>
+      <h2>Page {{refinedSearchFilters.index}}</h2>
+      <button @click="incrementPageNum(1)" class="input-not-round"><i class="fa fa-arrow-right fa"></i></button>
+    </span>
   </div>
 </template>
 
@@ -50,9 +59,14 @@ export default {
     refinedSearchFilters: Object,
     activeProfileVersion: String,
   },
+  methods: {
+    incrementPageNum(direction) {
+      this.$eventHub.$emit('updateSearchFilters', {index: this.refinedSearchFilters.index + direction})
+    }
+  },
   data() {
     return {
-      category: [
+      categories: [
         'Biomes',
         'Ores and Resources',
         'Structures',

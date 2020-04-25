@@ -6,6 +6,9 @@
 
 Hi! Welcome to Magi, a Minecraft Forge mod manager that envisions to be an open-source alternative to apps like Twitch! It uses the Curseforge API to search for mods, just like Twitch, but less invasive and more transparent.
 
+#### Powered by mc-curseforge-api
+Magi's internal search function is powered by Mondanzo's mc-curseforge-api!
+
 #### Shows you what it's downloading and why
 It's not uncommon for mods to depend on other mods to run. When you download a mod, Magi searches for any dependencies that mod might have and automatically downloads those as well!
 
