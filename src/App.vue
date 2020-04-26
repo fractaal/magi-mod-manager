@@ -349,6 +349,8 @@ export default {
                 job.auxiliary = size(job.file_size);
                 console.log(path)
 
+                this.addToMods(job.mod, {reason: job.reason, file_name: job.file_name});
+
               }).catch(error => {
                 job.progress = 1;
                 job.operation = 'Failed'
@@ -393,59 +395,6 @@ export default {
       }
     },
 
-    downloadModFile(file) {
-
-    },
-
-    /*
-    downloadModFile(chosen, job, update) {
-      console.log(chosen);
-
-      job.file_name = chosen.file_name; // Show the file name
-
-      // Figure out any dependencies it might have
-      for (let dependency in chosen.mod_dependencies) {
-        Curseforge.getMods({mod_key: chosen.mod_dependencies[dependency]}).then((mods) => {
-          this.addToJobQueue(mods[0], "Needed by " + job.name)
-        });
-      }
-
-      // Download the mod
-      chosen.download(this.config.activeProfile.instanceDirectory + '/mods' + "/" + chosen.file_name, {
-        override: true,
-        auto_check: true,
-      }, 
-      update).then(() => {
-        job.operation = "Complete"
-        job.auxiliary = size(job.filesize)
-        job.progress = 1
-
-        // Notify user
-        let downloadCompleteNotification = new Notification(job.name + " has finished downloading!", {
-          body: "Total size: " + size(job.filesize)
-        })
-
-        downloadCompleteNotification.onclick = () => {
-          remote.getCurrentWindow().maximize();
-        }
-
-        this.addToMods(job.mod, {reason: job.reason, file_name: chosen.file_name, md5: chosen.file_md5})
-        this.saveImportantToFile()
-
-      }).catch(err => {
-        job.progress = 1
-        job.auxiliary = err
-        job.operation = "Failed"
-
-        let downloadCompleteNotification = new Notification(job.name + " failed to download!")
-
-        downloadCompleteNotification.onclick = () => {
-          remote.getCurrentWindow().maximize();
-        }
-      });
-      
-    },*/
-
     modSearch(term) {
 
       this.modSearchTerm = term
@@ -487,11 +436,10 @@ export default {
       if (mod) {
         this.config.activeProfile.mods.push({
           name: mod.name,
-          logo: mod.logo,
-          owner: mod.owner,
-          blurb: mod.blurb,
+          logo: mod.logo.thumbnailUrl,
+          owner: mod.authors[0].name,
+          blurb: mod.summary,
           id: mod.id,
-          md5: payload.md5,
           managed: true,
           reason: payload.reason,
           file_name: payload.file_name,
@@ -746,37 +694,52 @@ export default {
       openPath = openPath[0]
 
       if (path.extname(openPath) == '.zip') { // Probably a twitch export...
+        this.$router.push('/ImportProfileLoadingScreen')
+        this.importStatus = "Reading manifest..."
+        let manifest = twitchImport.readManifest(openPath)
+        
         remote.dialog.showMessageBox({
           type: 'info',
-          title: 'Twitch profile import',
-          message: 'Magi will start Twitch profile import! Please give me a moment.'
+          title: 'Complete',
+          message: 'Please select a folder for ' + manifest.name + '.'
         })
-        this.$router.push('/ImportProfileLoadingScreen')
 
-        twitchImport.importTwitchZip(openPath, data => {
-          console.log("Twitch export data read complete!");
+        if (this.createProfile(manifest.name)) {
+          this.$router.push('/ImportProfileLoadingScreen');
+          this.importStatus = "Extracting overrides..."
+        remote.dialog.showMessageBox({
+          type: 'info',
+          title: 'Overrides extraction',
+          message: 'Magi will freeze for a moment while it\'s extracting some data from the zip file! ' + manifest.name + '.'
+        })
+          twitchImport.extractOverrides(openPath, this.config.activeProfile.instanceDirectory);
+          this.importStatus = "Override extraction complete!"
+
+          twitchImport.importTwitchZip(openPath, data => {
+            data.mods.forEach(mod => {
+              this.addToJobQueue(mod.mod, "Twitch profile import", mod.file)
+            })
+            this.$router.go(-1);
+          }, update => {
+            this.importStatus = update
+          }, error => {
+            this.importStatus = error
+            remote.dialog.showMessageBox({
+              type: 'error',
+              title: 'Twitch import failed',
+              message: error,
+            })
+            this.$router.go(-1)
+          })
+        } else {
+          console.warn("Profile creation failed, cancelling")
           remote.dialog.showMessageBox({
             type: 'info',
-            title: 'Complete',
-            message: 'Twitch profile import complete! Please select a folder for ' + data.name + '.'
+            title: 'Twitch import cancelled',
+            message: 'Twitch profile import cancelled.'
           })
-          
-          this.$router.go(-1);
-          if (this.createProfile(data.name)) {
-            data.mods.forEach(mod => {
-              this.addToJobQueue(mod.mod, "Twitch profile (" + data.name + ") import", mod.file)
-            })
-          } else {
-            console.warn("Profile creation failed, cancelling")
-            remote.dialog.showMessageBox({
-              type: 'info',
-              title: 'Twitch import cancelled',
-              message: 'Twitch profile import cancelled.'
-            })
-          }
-        }, importStatus => {
-          this.importStatus = importStatus;
-        })
+          this.$router.go(-1)
+        }
       }
 
       /*

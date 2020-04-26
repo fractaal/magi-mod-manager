@@ -1,6 +1,8 @@
 <template>
   <div class="centered">
     <h1 style="font-size: 50px;">Welcome to Magi {{appVersion}}!</h1>
+    <h2>Prerelease Build (Blue top bar)</h2>
+    <br>
     <br>
     <h2>You now have</h2>
     <transition name="fade">

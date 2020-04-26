@@ -1,7 +1,33 @@
 const AdmZip = require('adm-zip');
 const Curseforge = require('mc-curseforge-api');
 
-module.exports.importTwitchZip = function(path, callback, update) {
+module.exports.readManifest = function(path) {
+  let zip = new AdmZip(path)
+  let zipEntries = zip.getEntries();
+  let manifest;
+
+  zipEntries.forEach(zipEntry => {
+    if (zipEntry.entryName == "manifest.json") {
+      console.log("Reading manifest.json")
+      manifest = JSON.parse(zipEntry.getData())
+    }
+  })
+  return manifest;
+}
+
+module.exports.extractOverrides = function(zipPath, instanceDirectory) {
+  let zip = new AdmZip(zipPath)
+  console.log("Extracting overrides...");
+  try {
+    zip.extractEntryTo('overrides/', instanceDirectory, false)
+    return instanceDirectory;
+  } catch(err) {
+    console.error("Override extract failed: ", err)
+    return err;
+  }
+}
+
+module.exports.importTwitchZip = function(path, callback, update, error) {
   let zip = new AdmZip(path)
   let zipEntries = zip.getEntries();
 
@@ -11,12 +37,14 @@ module.exports.importTwitchZip = function(path, callback, update) {
 
   zipEntries.forEach(zipEntry => {
     if (zipEntry.entryName == "manifest.json") {
+      update("Reading manifest.json")
       console.log("Reading manifest.json")
       manifest = JSON.parse(zipEntry.getData())
     }
   })
 
   console.log("Awesome! Reading relevant information...");
+  update("Awesome! Reading relevant information...");
   data.gameVersion = manifest.minecraft.version
   data.name = manifest.name
   data.mods = []
@@ -41,8 +69,11 @@ module.exports.importTwitchZip = function(path, callback, update) {
   })
 
   Promise.all(promises).then(mods => {
-    console.log("Import complete!");
-    data.mods = mods;
+    update("Import complete!")
+    data.mods = mods;    
     callback(data);
+  }).catch(reason => {
+    console.error(reason)
+    error(reason)
   })
 }
