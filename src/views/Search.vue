@@ -3,7 +3,8 @@
     <span style="display: flex;">
       <h1 class="gap">Search</h1>
       <SearchDropdownList class="gap" purpose="search" label="Version" :list="refinedSearchFiltersTemplate.gameVersion" type="gameVersion" :activeProfileVersion="activeProfileVersion" :selected="refinedSearchFilters.gameVersion"/>
-      <SearchDropdownList class="gap" purpose="search" label="Category" :list="categories" type="categories" :selected="refinedSearchFilters.categories"/>
+      <!--<SearchDropdownList class="gap" purpose="search" label="Category" :list="categories" type="categories" :selected="refinedSearchFilters.categories"/>
+    -->
     </span>
     <br>
     <div style="max-height: 65vh; overflow-y: auto;">
@@ -18,7 +19,7 @@
       </transition>
         <div v-if="!noResultFound">
           <transition name="fade">
-            <h2 v-if="modSearchTerm">Results for {{modSearchTerm}}</h2>
+            <h2 v-if="modSearchTerm">Results for {{refinedSearchFilters}}</h2>
           </transition>
           <transition-group name="fade">
             <div v-for="modSearchResult in modSearchResults" :key="modSearchResult.id" class="card" style="display: grid; grid-template-columns: 3fr 1fr;">
@@ -38,11 +39,11 @@
           </transition-group>
         </div>
     </div>
-    <span style="display: flex; justify-content: center; align-items: center; height: 75px;">
+   <!-- <span style="display: flex; justify-content: center; align-items: center; height: 75px;">
       <button v-if="!(this.refinedSearchFilters.index === 1)" @click="incrementPageNum(-1)" class="input-not-round"><i class="fa fa-arrow-left fa"></i></button>
       <h2>Page {{refinedSearchFilters.index}}</h2>
       <button @click="incrementPageNum(1)" class="input-not-round"><i class="fa fa-arrow-right fa"></i></button>
-    </span>
+    </span>-->
   </div>
 </template>
 

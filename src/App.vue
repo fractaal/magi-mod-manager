@@ -21,7 +21,7 @@
         <button class="input" @click="() => exportImportMenu.popup()" style="height: 3.5em;"><i class="fa fa-cog fa-lg"></i></button>
         <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
         <button class="input" @click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
-        <TextBox :onSubmit="(input) => {this.refinedSearchFilters.index = 1; modSearch(input)}" placeholder="Search..." icon="fa-search"/>
+        <TextBox :onSubmit="modSearch" placeholder="Search..." icon="fa-search"/>
         <!--
         <form v-on:submit.prevent="modSearch" style="position: relative;">
           <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
@@ -37,7 +37,7 @@
           <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
                         :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
                         :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"
-                        :profiles="profiles" :config="this.config" />
+                        :profiles="profiles" :config="this.config" :importStatus="importStatus"/>
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue"></JobQueue>
@@ -52,9 +52,14 @@ const fs = require('fs') // filesystem read / write
 const path = require('path') // file extension things 
 const { remote } = require('electron') // dialogs and stuff
 const size = require('filesize').partial({standard: "iec"}) // Filesize formatting
+const utility = require('./utility');
+const twitchImport = require('./twitchImport');
 
 import JobQueue from './components/JobQueue'
 import TextBox from './components/TextBox'
+
+import Job from './logic/job';
+import { importTwitchZip } from './twitchImport'
 
 const AppPath = remote.app.getPath('userData')
 
@@ -83,8 +88,9 @@ export default {
   data() {
     // Get changeLogs
     let changeLogs = [
-      "New and improved job manager",
-      "Better search"
+      "New, improved, and simpler job manager",
+      "Better search (up to date with Twitch itself!)",
+      "Easy import of Twitch profiles!"
     ]
 
     // Get versions
@@ -156,7 +162,6 @@ export default {
       modSearchTerm: "",
       modSearchResults: [],
       modDetails: {},
-      jobQueue: [],
       profileFolderWatcher: null,
       profileListWatcher: null,
       exportImportMenu: exportImportMenu,
@@ -166,12 +171,12 @@ export default {
         gameVersion: minecraftVersions,
       },
       refinedSearchFilters: {
-        gameVersion: 'activeProfileVersion',
-        categories: '',
-        pageSize: 10,
-        index: 1,
+        gameVersion: config.activeProfile.version,
+        pageSize: 25,
       },
       noResultFound: false,
+      jobQueue: [],
+      importStatus: '',
     }
   },
 
@@ -180,9 +185,9 @@ export default {
     this.profiles = this.readProfiles()
 
     // Welcome screen
-    if (!this.appSettings.wasWelcomeScreenDisplayed) {
+    if (!this.appSettings['wasWelcomeScreenDisplayedFor'+remote.app.getVersion()]) {
       this.$router.push('/Welcome')
-      this.appSettings.wasWelcomeScreenDisplayed = true;
+      this.appSettings['wasWelcomeScreenDisplayedFor'+remote.app.getVersion()] = true;
     }
 
     // Delete mod event
@@ -231,7 +236,13 @@ export default {
 
     // Start download event
     this.$eventHub.$on('startDownload', (pickedMod) => {
-      this.addToJobQueue(pickedMod)
+      //this.addToJobQueue(pickedMod)
+      // This startdownload event will pick the latest mod file for the selected version
+      utility.getLatestModFile(pickedMod, this.config.activeProfile.version).then(latestFile => {
+        this.addToJobQueue(pickedMod, "User initiated", latestFile);
+      }).catch(error => {console.error(error); return})
+
+
     });
 
     // Remove specific job from Queue
@@ -302,7 +313,6 @@ export default {
     };
     
 
-
     let jobQueueIndex = 0; // Job manager jobQueueIndex
     let jobManager;
 
@@ -313,44 +323,41 @@ export default {
         // Don't start if job queue jobQueueIndex is 0; Reset jobQueueIndex to 0 if the jobQueueIndex is larger than the queue or if current jobQueueIndex maps to no job
 
         if (!this.jobQueue[jobQueueIndex].lock && this.jobQueue[jobQueueIndex].progress != 1) {
-          this.jobQueue[jobQueueIndex].lock = true // Don't work on it again if you're already downloading it
+          setTimeout(() => { // Spawn a new async thread for this job
+            let job = this.jobQueue[jobQueueIndex]
 
-          setTimeout(() => {
-            let job = this.jobQueue[jobQueueIndex];
+            job.lock = true // Don't work on it again if you're already downloading it
+            job.progress = 0 / job.file_size
 
-            let lastTime = Date.now()
-            let lastRecieved = 0
+            console.log("Working on job ", job);
 
-            let filesize = 0;
+            let totalSizeRecieved = 0;
 
-            function update(meta) { // This is called each time the downloader module gets a new chunk of data
-              job.operation = "Downloading"
-              job.progress = meta.recieved / meta.totalSize
-              job.auxiliary = (size(meta.recieved) + ' of ' + size(meta.totalSize))
-
-              lastRecieved = meta.recieved
-              lastTime = Date.now()
-
-              job.filesize = meta.totalSize
+            function update(delta) {
+              totalSizeRecieved += delta.sizeRecieved;
+              job.progress = totalSizeRecieved / job.file_size;
+              job.auxiliary = size(totalSizeRecieved) + ' of ' + size(job.file_size)
             }
 
-            // Grab the mod file
-            let chosen;
-            if (job.file) {
-              console.log(job.file);
-              chosen = job.file
-              this.downloadModFile(chosen, job, update);
-            } else {
-              job.mod.getFiles({newest_only: true, gameVersion: this.config.activeProfile.version}).then((files) => {
-                console.log(files[0])
-                chosen = files[0]
-                this.downloadModFile(chosen, job, update);
+            job.file.download(
+              this.config.activeProfile.instanceDirectory + '/mods/' + job.file_name, // Path
+              true, // Overwrite existing
+              update // Bind to update so that it can show progress
+              ).then(path => {
+                job.progress = 1;
+                job.operation = "Complete";
+                job.auxiliary = size(job.file_size);
+                console.log(path)
+
+              }).catch(error => {
+                job.progress = 1;
+                job.operation = 'Failed'
+                job.auxiliary = error
               })
-            }
-          }, 1);
 
+          }, 1) // (Spawn it after 1 ms)
         } else if (this.jobQueue[jobQueueIndex].progress == 1) {
-          console.log("Weeee")
+          console.log("Traversing up the job queue");
           jobQueueIndex++; 
         }
 
@@ -386,6 +393,11 @@ export default {
       }
     },
 
+    downloadModFile(file) {
+
+    },
+
+    /*
     downloadModFile(chosen, job, update) {
       console.log(chosen);
 
@@ -431,11 +443,12 @@ export default {
           remote.getCurrentWindow().maximize();
         }
       });
-    },
+      
+    },*/
 
     modSearch(term) {
 
-        this.modSearchTerm = term
+      this.modSearchTerm = term
 
       console.log(this.refinedSearchFilters)
       if (this.$router.currentRoute.path !== '/search') {
@@ -445,6 +458,8 @@ export default {
       
       this.modSearchResults = []
       this.noResultFound = false
+
+      let searchFilters = Object.assign({}, this.refinedSearchFilters)
       this.refinedSearchFilters.searchFilter = this.modSearchTerm
       this.refinedSearchFilters.gameVersion = 
         this.refinedSearchFilters.gameVersion == "activeProfileVersion" ? this.config.activeProfile.version : this.refinedSearchFilters.gameVersion
@@ -495,6 +510,52 @@ export default {
       }
     },
 
+    addToJobQueue(mod, reason, file) {
+      if (!mod || !file) {console.error("Need mod object and file object"); return;}
+      reason = reason || "User initiated";
+
+      if (!this.config.activeProfile.instanceDirectory) {
+        remote.dialog.showMessageBox({
+          type: 'info',
+          title: 'Select an instance directory',
+          message: 'Before you can download any mods, select a Minecraft instance directory.',
+        })
+        if (!this.changeInstanceDirectory()) {
+        remote.dialog.showMessageBox({
+          type: 'error',
+          title: 'No directory selected',
+          message: "You didn't select a directory! Download aborted.",
+        })
+        return;
+        }
+      }
+
+      if (this.modExistsInProfile(mod)) {
+        console.warn(mod.name + " already exists in the profile, aborting");
+        return;
+      }
+
+      if (this.modExistsInJobQueue(mod)) {
+        console.warn(mod.name + " already exists in the job queue, aborting");
+        return;
+      }
+
+      this.jobQueue.push({
+        mod,
+        file,
+        key: mod.id,
+        name: mod.name,
+        file_name: path.basename(file.download_url), 
+        file_size: file.file_size,
+        progress: 0,
+        operation: "Queued",
+        reason: reason
+      })
+
+
+    },
+
+    /*
     addToJobQueue(mod, reason, file) {
       if (!this.config.activeProfile.instanceDirectory) {
         remote.dialog.showMessageBox({
@@ -548,7 +609,7 @@ export default {
           lock: false,
         });
       }
-    },
+    },*/
 
     removeFromJobQueue(key) {
       for (let job in this.jobQueue) {
@@ -658,6 +719,7 @@ export default {
     },
 
     exportProfile() {
+      /*
       let savePath = remote.dialog.showSaveDialog({});
 
       if (savePath) {
@@ -676,13 +738,48 @@ export default {
 
         fs.writeFileSync(savePath, JSON.stringify(data))
       }
-
+      */
     },
 
     importProfile() {
       let openPath = remote.dialog.showOpenDialog({properties: ['openFile']})
       openPath = openPath[0]
 
+      if (path.extname(openPath) == '.zip') { // Probably a twitch export...
+        remote.dialog.showMessageBox({
+          type: 'info',
+          title: 'Twitch profile import',
+          message: 'Magi will start Twitch profile import! Please give me a moment.'
+        })
+        this.$router.push('/ImportProfileLoadingScreen')
+
+        twitchImport.importTwitchZip(openPath, data => {
+          console.log("Twitch export data read complete!");
+          remote.dialog.showMessageBox({
+            type: 'info',
+            title: 'Complete',
+            message: 'Twitch profile import complete! Please select a folder for ' + data.name + '.'
+          })
+          
+          this.$router.go(-1);
+          if (this.createProfile(data.name)) {
+            data.mods.forEach(mod => {
+              this.addToJobQueue(mod.mod, "Twitch profile (" + data.name + ") import", mod.file)
+            })
+          } else {
+            console.warn("Profile creation failed, cancelling")
+            remote.dialog.showMessageBox({
+              type: 'info',
+              title: 'Twitch import cancelled',
+              message: 'Twitch profile import cancelled.'
+            })
+          }
+        }, importStatus => {
+          this.importStatus = importStatus;
+        })
+      }
+
+      /*
       let profileData;
       try { 
         profileData = JSON.parse(fs.readFileSync(openPath))
@@ -717,7 +814,7 @@ export default {
                   for (let file in files) {
                     if (files[file].file_md5 === profileData.mods[mod].md5) {
                       console.log("found a matching hatch! awesome!")
-                      this.addToJobQueue(modResult, profileData.name + ' import', files[file]);
+                      //this.addToJobQueue(modResult, profileData.name + ' import', files[file]);
                     }
                   }
                 })
@@ -735,6 +832,7 @@ export default {
         })
         return
       }
+      */
     },
 
     minimize() {

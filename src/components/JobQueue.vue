@@ -1,6 +1,6 @@
 <template>
   <div class="jobViewColor">
-    <h2>Job Queue</h2>
+    <h2>Download Queue</h2>
     <div style="display: flex; flex-direction: column; overflow-y: auto; max-height: 87vh; overflow-x: hidden;">
       <ul>
         <transition-group name="list" tag="div">

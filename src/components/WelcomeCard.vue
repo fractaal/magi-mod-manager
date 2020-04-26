@@ -32,7 +32,7 @@
         if (this.scroller == this.changeLogs.length) {
           this.scroller = 0
         }
-      }, 1500)
+      }, 3000)
     },
     destroyed() {
       delete this.scrollerFunction;
