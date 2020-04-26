@@ -54,6 +54,7 @@ const { remote } = require('electron') // dialogs and stuff
 const size = require('filesize').partial({standard: "iec"}) // Filesize formatting
 const utility = require('./utility');
 const twitchImport = require('./twitchImport');
+const requestSync = require('sync-request');
 
 import JobQueue from './components/JobQueue'
 import TextBox from './components/TextBox'
@@ -94,15 +95,8 @@ export default {
     ]
 
     // Get versions
-    let versionRequest = new XMLHttpRequest()
-    versionRequest.open('GET', 'https://launchermeta.mojang.com/mc/game/version_manifest.json', false);
-    versionRequest.send(null);
 
-    let minecraftVersions;
-
-    if (versionRequest.status === 200) {
-      minecraftVersions = JSON.parse(versionRequest.responseText);
-    }
+    let minecraftVersions = JSON.parse(requestSync('GET', 'https://launchermeta.mojang.com/mc/game/version_manifest.json').getBody('utf8'))
 
     // Initialize this if the app has no existing configuration (first time run)
     if (!fs.existsSync(AppPath + '/profiles')) {
@@ -456,6 +450,7 @@ export default {
           id: Date.now(),
         })
       }
+      this.saveImportantToFile();
     },
 
     addToJobQueue(mod, reason, file) {
