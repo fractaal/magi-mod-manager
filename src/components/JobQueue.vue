@@ -1,6 +1,9 @@
 <template>
   <div class="jobViewColor">
     <h2>Download Queue</h2>
+    <p>Maximum active jobs: {{maxActiveJobs}}</p>
+    <p>Currently active jobs: {{activeJobs}}</p>
+    <p>Job queue index: {{jobQueueIndex}}</p>
     <div style="display: flex; flex-direction: column; overflow-y: auto; max-height: calc(100vh - 175px); overflow-x: hidden;">
       <ul>
         <transition-group name="list" tag="div">
@@ -15,7 +18,12 @@
 import JobCard from '@/components/JobCard'
 export default {
   name: "JobQueue",
-  props: ['jobQueue'],
+  props: {
+    jobQueue: Array,
+    maxActiveJobs: Number,
+    activeJobs: Number,
+    jobQueueIndex: Number,
+  },
   components: {
     JobCard,
   }

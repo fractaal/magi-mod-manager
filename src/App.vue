@@ -40,7 +40,7 @@
                         :profiles="profiles" :config="this.config" :importStatus="importStatus"/>
         </transition>
       </div>
-      <JobQueue :jobQueue="jobQueue"></JobQueue>
+      <JobQueue :jobQueue="jobQueue" :maxActiveJobs="maxActiveJobs" :activeJobs="activeJobs" :jobQueueIndex="jobQueueIndex"></JobQueue>
     </div>
   </div>
 </template>
@@ -185,6 +185,9 @@ export default {
       noResultFound: false,
       jobQueue: [],
       importStatus: '',
+      jobQueueIndex: 0,
+      maxActiveJobs: 5,
+      activeJobs: 0,
     }
   },
 
@@ -354,25 +357,29 @@ export default {
     };
     
 
-    let jobQueueIndex = 0; // Job manager jobQueueIndex
+    this.jobQueueIndex = 0; // Job manager this.jobQueueIndex
+    this.maxActiveJobs = 5; 
+    this.activeJobs = 0;
+
     let jobManager;
+
 
     // Job Manager Loop
     if (!jobManager) {
       jobManager = setInterval(() => {
-        console.log("Job queue index is now at " + jobQueueIndex)
+        // console.log("Job queue index is now at " + this.jobQueueIndex + " there are currently " + activeJobs + " jobs");
 
-        if (this.jobQueue.length == 0 || jobQueueIndex > this.jobQueue.length || !this.jobQueue[jobQueueIndex]) { 
+        if (this.jobQueue.length == 0 || this.jobQueueIndex > this.jobQueue.length || !this.jobQueue[this.jobQueueIndex]) { 
           console.log("Resetting job queue index")
-          jobQueueIndex = 0; 
+          this.jobQueueIndex = 0; 
           return 
         } 
-        // Don't start if job queue jobQueueIndex is 0; Reset jobQueueIndex to 0 if the jobQueueIndex is larger than the queue or if current jobQueueIndex maps to no job
+        // Don't start if job queue this.jobQueueIndex is 0; Reset this.jobQueueIndex to 0 if the this.jobQueueIndex is larger than the queue or if current this.jobQueueIndex maps to no job
 
-        if (!this.jobQueue[jobQueueIndex].lock && this.jobQueue[jobQueueIndex].progress != 1) {
+        if (!this.jobQueue[this.jobQueueIndex].lock && this.jobQueue[this.jobQueueIndex].progress != 1) {
           setTimeout(() => { // Spawn a new async thread for this job
-            let job = this.jobQueue[jobQueueIndex]
-
+            this.activeJobs++;
+            let job = this.jobQueue[this.jobQueueIndex]
             job.lock = true // Don't work on it again if you're already downloading it
             job.progress = 0 / job.file_size
 
@@ -398,19 +405,29 @@ export default {
 
                 this.addToMods(job.mod, {reason: job.reason, file_name: job.file_name});
 
+                this.activeJobs--
+
+                this.removeFromJobQueue(job.key)
+
               }).catch(error => {
                 job.progress = 1;
                 job.operation = 'Failed'
                 job.auxiliary = error
+
+                this.activeJobs--
+
+                this.removeFromJobQueue(job.key)
               })
 
           }, 1) // (Spawn it after 1 ms)
-        } else if (this.jobQueue[jobQueueIndex].progress == 1) {
+        } 
+        
+        if (this.activeJobs < this.maxActiveJobs) {
           console.log("Traversing up the job queue");
-          jobQueueIndex++; 
+          this.jobQueueIndex++; 
         }
 
-      }, 1000)
+      }, 750)
     } else {
       console.warn("Job manager already exists!")
     }
