@@ -7,11 +7,11 @@
     -->
     </span>
     <br>
-    <div style="max-height: 65vh; overflow-y: auto;">
+    <div style="max-height: calc(100vh - 209px); overflow-y: auto;">
       <span v-if="modSearchResults.length == 0 && !noResultFound">
         <div v-for="index in 10" :key="index" class="card shimmer" style="height: 5em;"></div>
       </span>
-      <transition name="name">
+      <transition name="fade">
         <div v-if="noResultFound" style="height: 75vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
           <h1>Curseforge returned no results :(</h1>
           <h1>Maybe going back a page or searching for something else?</h1>

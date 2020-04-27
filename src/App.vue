@@ -91,7 +91,8 @@ export default {
     let changeLogs = [
       "New, improved, and simpler job manager",
       "Better search (up to date with Twitch itself!)",
-      "Easy import of Twitch profiles!"
+      "Easy import of Twitch profiles!",
+      "UI Improvements!"
     ]
 
     // Get versions
@@ -289,6 +290,39 @@ export default {
       this.changeProfile(this.config.activeProfile.name)
     })
 
+    // Delete profile event
+    this.$eventHub.$on('deleteProfile', () => {
+      remote.dialog.showMessageBox({
+        type: 'warning',
+        buttons: ["Delete the profile", "Delete the profile along with its folder (Deletes /mods and /config)", "No, don't delete it"],
+        defaultId: 2,
+        title: 'Are you really sure?',
+        message: "You're about to delete " + this.config.activeProfile.name + "!"
+      }, response => {
+        if (response === 2) return
+
+        if (response === 1) {
+          console.warn("Performing dangerous operation!")
+          try {
+            fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/mods/')
+            fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/config/')
+          } catch(error) {
+            console.warn("Dangerous operation failed ", error);
+            remote.dialog.showMessageBox({
+              type: 'error',
+              title: 'Profile data delete failed',
+              message: "Magi failed to delete the /mods and /config folder."
+            })
+          }
+        }
+        fs.unlinkSync(AppPath + '/profiles/' + this.config.activeProfile.name + '.json')
+        delete this.config.activeProfile; 
+
+        this.changeProfile('Default', {save: false});
+        this.$router.push('/');
+      })
+    })
+
     // Watch currently active profile folder
     if (this.config.activeProfile.instanceDirectory) {
       this.startProfileFolderWatcher()
@@ -364,7 +398,7 @@ export default {
   },
 
   methods: {
-    createProfile(name) {
+    createProfile(name, options = {navigateToHome: true}) {
       let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
 
       if (chosenDirectory) {
@@ -379,7 +413,7 @@ export default {
           return false;
         }
 
-        this.$router.push('/')
+        if (options.navigateToHome) this.$router.push('/')
         this.changeProfile(name);
 
         return true
@@ -649,8 +683,8 @@ export default {
       }
     },
 
-    changeProfile(name) {
-      this.saveImportantToFile() // Save the things that need to be persistent accross profiles
+    changeProfile(name, options = {save: true}) {
+      if (options.save) { this.saveImportantToFile() } // Save the things that need to be persistent accross profiles
       this.stopProfileFolderWatcher() // We want to change the active directory therefore we stop the watcher
 
       console.log("Switching from " + this.appSettings.activeProfile + " to " + name)
@@ -690,52 +724,63 @@ export default {
 
       if (path.extname(openPath) == '.zip') { // Probably a twitch export...
         this.$router.push('/ImportProfileLoadingScreen')
-        this.importStatus = "Reading manifest..."
-        let manifest = twitchImport.readManifest(openPath)
-        
-        remote.dialog.showMessageBox({
-          type: 'info',
-          title: 'Complete',
-          message: 'Please select a folder for ' + manifest.name + '.'
-        })
+        this.importStatus = "Warming up..."
 
-        if (this.createProfile(manifest.name)) {
-          this.$router.push('/ImportProfileLoadingScreen');
-          this.importStatus = "Extracting overrides..."
-        remote.dialog.showMessageBox({
-          type: 'info',
-          title: 'Overrides extraction',
-          message: 'Magi will freeze for a moment while it\'s extracting some data from the zip file! ' + manifest.name + '.'
-        })
-          twitchImport.extractOverrides(openPath, this.config.activeProfile.instanceDirectory);
-          this.importStatus = "Override extraction complete!"
-
-          twitchImport.importTwitchZip(openPath, data => {
-            data.mods.forEach(mod => {
-              this.addToJobQueue(mod.mod, "Twitch profile import", mod.file)
-            })
-            this.$router.go(-1);
-          }, update => {
-            this.importStatus = update
-          }, error => {
-            this.importStatus = error
-            remote.dialog.showMessageBox({
-              type: 'error',
-              title: 'Twitch import failed',
-              message: error,
-            })
-            this.$router.go(-1)
-          })
-        } else {
-          console.warn("Profile creation failed, cancelling")
+        setTimeout(() => {
+          this.importStatus = "Reading manifest..."
+          let manifest = twitchImport.readManifest(openPath)
+          
           remote.dialog.showMessageBox({
             type: 'info',
-            title: 'Twitch import cancelled',
-            message: 'Twitch profile import cancelled.'
+            title: 'Twitch Profile Import',
+            message: 'Awesome! Magi can read Twitch profile exports. Please select a folder for ' + manifest.name + '.'
           })
-          this.$router.go(-1)
-        }
+
+          if (this.createProfile(manifest.name, {navigateToHome: false})) {
+            this.importStatus = "Extracting overrides..."
+
+            twitchImport.extractOverrides(openPath, this.config.activeProfile.instanceDirectory).then(() => {
+              this.importStatus = "Override extraction complete!"
+
+              twitchImport.importTwitchZip(openPath, data => {
+                data.mods.forEach(mod => {
+                  this.addToJobQueue(mod.mod, "Twitch profile import", mod.file)
+                })
+                this.$router.go(-1);
+              }, update => {
+                this.importStatus = update
+              }, error => {
+                this.importStatus = error
+                remote.dialog.showMessageBox({
+                  type: 'error',
+                  title: 'Twitch import failed',
+                  message: error,
+                })
+                this.$router.go(-1)
+              })
+            }, error => {
+              this.importStatus = error
+              remote.dialog.showMessageBox({
+                type: 'error',
+                title: 'Twitch import failed',
+                message: error,
+              })
+              this.$router.go(-1)
+            })
+
+
+          } else {
+            console.warn("Profile creation failed, cancelling")
+            remote.dialog.showMessageBox({
+              type: 'info',
+              title: 'Twitch import cancelled',
+              message: 'Twitch profile import cancelled.'
+            })
+            this.$router.go(-1)
+          }
+        }, 2000);
       }
+    },
 
       /*
       let profileData;
@@ -790,8 +835,7 @@ export default {
         })
         return
       }
-      */
-    },
+    },*/
 
     minimize() {
       remote.getCurrentWindow().minimize()

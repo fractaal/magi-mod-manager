@@ -16,6 +16,7 @@
       <div style="display: flex;">
         <button style="margin-left:20px; margin-right:20px; margin-bottom: 20px;" class="input-not-round input-highlight" @click="configureProfile">Save my changes</button>
         <button style="margin-left:20px; margin-right:20px; margin-bottom: 20px;" class="input-not-round" @click="$router.push('/')">Never mind</button>
+        <button style="margin-left:20px; margin-right:20px; margin-bottom: 20px;" class="input-not-round input-highlight-danger" @click="$eventHub.$emit('deleteProfile')">Delete this profile</button>
       </div>
     </div>
   </div>

@@ -5,7 +5,7 @@
       <h1>{{titles[randomOne]}}</h1>
       <h3>{{subtitles[randomTwo]}}</h3>
     </span>
-    <div style="max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column;">
+    <div style="max-height: calc(100vh - 190px); overflow-y: auto; display: flex; flex-direction: column;">
       <transition-group name="list" tag="div">
         <HomeCard v-for="mod in mods" :key="mod.id" :mod="mod"></HomeCard>
       </transition-group>
