@@ -95,9 +95,22 @@ export default {
       "UI Improvements!"
     ]
 
-    // Get versions
+    let minecraftVersions;
 
-    let minecraftVersions = JSON.parse(requestSync('GET', 'https://launchermeta.mojang.com/mc/game/version_manifest.json').getBody('utf8'))
+    // Get versions
+    try {
+      minecraftVersions = JSON.parse(requestSync('GET', 'https://launchermeta.mojang.com/mc/game/version_manifest.json').getBody('utf8'))
+    } catch(error) {
+      console.warn("Version manifest request failed! Falling back to on-disk version manifest...", error)
+      try {
+        minecraftVersions = JSON.parse(fs.readlinkSync(AppPath + '/version_manifest.json'));
+      } catch (error) {
+        console.error("On disk version manifest read failed! Magi can't start!")
+        remote.dialog.showErrorBox("Version manifest request failed", "Online and on-disk version manifest data reads failed! Magi can't start! " + error);
+        window.close();
+      }
+    }
+    
 
     // Initialize this if the app has no existing configuration (first time run)
     if (!fs.existsSync(AppPath + '/profiles')) {
