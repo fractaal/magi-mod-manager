@@ -360,8 +360,13 @@ export default {
     // Job Manager Loop
     if (!jobManager) {
       jobManager = setInterval(() => {
-        if (jobQueueIndex > this.jobQueue.length) { jobQueueIndex = 0; console.log("Resetting job queue index back to 0") }// Set the index back to 0 if it's larger than the job queue itself
-        if (this.jobQueue.length == 0 || jobQueueIndex > this.jobQueue.length || !this.jobQueue[jobQueueIndex]) { jobQueueIndex = 0; return } 
+        console.log("Job queue index is now at " + jobQueueIndex)
+
+        if (this.jobQueue.length == 0 || jobQueueIndex > this.jobQueue.length || !this.jobQueue[jobQueueIndex]) { 
+          console.log("Resetting job queue index")
+          jobQueueIndex = 0; 
+          return 
+        } 
         // Don't start if job queue jobQueueIndex is 0; Reset jobQueueIndex to 0 if the jobQueueIndex is larger than the queue or if current jobQueueIndex maps to no job
 
         if (!this.jobQueue[jobQueueIndex].lock && this.jobQueue[jobQueueIndex].progress != 1) {
