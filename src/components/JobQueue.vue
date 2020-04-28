@@ -1,10 +1,11 @@
 <template>
   <div class="jobViewColor">
     <h2>Download Queue</h2>
-    <p>Maximum active jobs: {{maxActiveJobs}}</p>
-    <p>Currently active jobs: {{activeJobs}}</p>
-    <p>Job queue index: {{jobQueueIndex}}</p>
-    <div style="display: flex; flex-direction: column; overflow-y: auto; max-height: calc(100vh - 175px); overflow-x: hidden;">
+    <div style="display: flex;">
+      <p style="margin-right: 2em;">Downloads queued: {{jobQueueLength}}</p>
+      <p>Active downloads: {{activeJobs}}</p>
+    </div>
+    <div style="display: flex; flex-direction: column; overflow-y: auto; max-height: calc(100vh - 200px); overflow-x: hidden;">
       <ul>
         <transition-group name="list" tag="div">
           <JobCard v-for="job in jobQueue" :key="job.key" :job="job" class="list-item no-style-type" style="flex-grow: 1;"></JobCard>
@@ -26,6 +27,11 @@ export default {
   },
   components: {
     JobCard,
+  },
+  computed: {
+    jobQueueLength: function() {
+      return this.jobQueue.length;
+    }
   }
 }
 </script>

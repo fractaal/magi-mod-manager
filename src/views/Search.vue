@@ -19,7 +19,7 @@
       </transition>
         <div v-if="!noResultFound">
           <transition name="fade">
-            <h2 v-if="modSearchTerm">Results for {{refinedSearchFilters}}</h2>
+            <h2 v-if="modSearchTerm">Results for {{modSearchTerm}}</h2>
           </transition>
           <transition-group name="fade">
             <div v-for="modSearchResult in modSearchResults" :key="modSearchResult.id" class="card" style="display: grid; grid-template-columns: 3fr 1fr;">

@@ -21,7 +21,7 @@
         <button class="input" @click="() => exportImportMenu.popup()" style="height: 3.5em;"><i class="fa fa-cog fa-lg"></i></button>
         <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
         <button class="input" @click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
-        <TextBox :onSubmit="modSearch" placeholder="Search..." icon="fa-search"/>
+        <TextBox :onSubmit="modSearch" placeholder="Search for new mods..." icon="fa-search"/>
         <!--
         <form v-on:submit.prevent="modSearch" style="position: relative;">
           <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
@@ -60,7 +60,6 @@ import JobQueue from './components/JobQueue'
 import TextBox from './components/TextBox'
 
 import Job from './logic/job';
-import { importTwitchZip } from './twitchImport'
 
 const AppPath = remote.app.getPath('userData')
 
@@ -271,7 +270,9 @@ export default {
       for (let key in change) {
         this.refinedSearchFilters[key] = change[key]
       }
-      this.modSearch();
+      this.modSearch(
+        this.refinedSearchFilters.searchFilter ? this.refinedSearchFilters.searchFilter : ""
+      );
     })
 
     // New profile event
@@ -367,10 +368,10 @@ export default {
     // Job Manager Loop
     if (!jobManager) {
       jobManager = setInterval(() => {
-        // console.log("Job queue index is now at " + this.jobQueueIndex + " there are currently " + activeJobs + " jobs");
 
-        if (this.jobQueue.length == 0 || this.jobQueueIndex > this.jobQueue.length || !this.jobQueue[this.jobQueueIndex]) { 
-          console.log("Resetting job queue index")
+        console.log(this.jobQueue[this.jobQueueIndex]);
+
+        if (this.jobQueue.length == 0 || this.jobQueueIndex >= (this.jobQueue.length) || !this.jobQueue[this.jobQueueIndex]) { 
           this.jobQueueIndex = 0; 
           return 
         } 
@@ -378,10 +379,18 @@ export default {
 
         if (!this.jobQueue[this.jobQueueIndex].lock && this.jobQueue[this.jobQueueIndex].progress != 1) {
           setTimeout(() => { // Spawn a new async thread for this job
+
+            if (this.jobQueue[this.jobQueueIndex].lock || this.jobQueue[this.jobQueueIndex].started) {
+              console.warn("Wait... this job is already started!")
+              return;
+            }
+
             this.activeJobs++;
             let job = this.jobQueue[this.jobQueueIndex]
             job.lock = true // Don't work on it again if you're already downloading it
+            job.started = true;
             job.progress = 0 / job.file_size
+            job.operation = "Starting"
 
             console.log("Working on job ", job);
 
@@ -391,6 +400,17 @@ export default {
               totalSizeRecieved += delta.sizeRecieved;
               job.progress = totalSizeRecieved / job.file_size;
               job.auxiliary = size(totalSizeRecieved) + ' of ' + size(job.file_size)
+            }
+
+            if (job.options.autoFindDependencies) {
+              job.file.getDependencies().then(dependencies => {
+                dependencies.map(dependency => {
+                  let dependencyFile;
+                  utility.getLatestModFile(dependency, this.config.activeProfile.version).then(latestDependencyFile => {
+                    this.addToJobQueue(dependency, `Needed by ${job.mod.name}`, latestDependencyFile);
+                  })
+                })
+              })
             }
 
             job.file.download(
@@ -416,18 +436,20 @@ export default {
 
                 this.activeJobs--
 
-                this.removeFromJobQueue(job.key)
+                //this.removeFromJobQueue(job.key)
               })
 
           }, 1) // (Spawn it after 1 ms)
         } 
         
-        if (this.activeJobs < this.maxActiveJobs) {
+        if (this.activeJobs < this.maxActiveJobs && this.jobQueueIndex < (this.jobQueue.length - 1)) {
           console.log("Traversing up the job queue");
           this.jobQueueIndex++; 
+        } else if ((this.jobQueueIndex + 1) >= this.jobQueue.length) {
+          this.jobQueueIndex = 0;
         }
 
-      }, 750)
+      }, 250)
     } else {
       console.warn("Job manager already exists!")
     }
@@ -483,6 +505,11 @@ export default {
             this.modSearchResults = []
             this.noResultFound = true;
           }
+      }).catch(function (reason) {
+        remote.dialog.showErrorBox(
+          'Error while searching', 
+          reason ? reason : "There's something very wrong..."
+          );
       });
     },
 
@@ -500,7 +527,7 @@ export default {
       if (mod) {
         this.config.activeProfile.mods.push({
           name: mod.name,
-          logo: mod.logo.thumbnailUrl,
+          logo: mod.logo ? mod.logo.thumbnailUrl : "",
           owner: mod.authors[0].name,
           blurb: mod.summary,
           id: mod.id,
@@ -523,7 +550,7 @@ export default {
       this.saveImportantToFile();
     },
 
-    addToJobQueue(mod, reason, file) {
+    addToJobQueue(mod, reason, file, options = {autoFindDependencies: true}) {
       if (!mod || !file) {console.error("Need mod object and file object"); return;}
       reason = reason || "User initiated";
 
@@ -562,67 +589,12 @@ export default {
         file_size: file.file_size,
         progress: 0,
         operation: "Queued",
-        reason: reason
+        reason: reason,
+        lock: false,
+        started: false,
+        options,
       })
-
-
     },
-
-    /*
-    addToJobQueue(mod, reason, file) {
-      if (!this.config.activeProfile.instanceDirectory) {
-        remote.dialog.showMessageBox({
-          type: 'info',
-          title: 'Select an instance directory',
-          message: 'Before you can download any mods, select a Minecraft instance directory.',
-        })
-        if (!this.changeInstanceDirectory()) {
-        remote.dialog.showMessageBox({
-          type: 'error',
-          title: 'No directory selected',
-          message: "You didn't select a directory! Download aborted.",
-        })
-        return;
-        }
-      }
-
-      if (this.modExistsInProfile(mod)) {
-        console.warn(mod.name + " already exists");
-        return;
-      }
-
-      if (this.modExistsInJobQueue(mod)) {
-        console.warn(mod.name + " already exists");
-      }
-
-      if (file) {
-        console.log("this is a file")
-        this.jobQueue.push({
-          mod,
-          progress: 0,
-          operation: "Queued",
-          name: mod.name,
-          file_name: "...",
-          auxiliary: mod.file_size,
-          reason: reason || "User initiated",
-          key: Date.now(),
-          lock: false,
-          file: file
-        })
-      } else {
-        this.jobQueue.push({
-          mod,
-          progress: 0,
-          operation: "Queued",
-          name: mod.name,
-          file_name: "...",
-          auxiliary: mod.file_size,
-          reason: reason || "User initiated",
-          key: Date.now(),
-          lock: false,
-        });
-      }
-    },*/
 
     removeFromJobQueue(key) {
       for (let job in this.jobQueue) {
@@ -780,7 +752,7 @@ export default {
 
               twitchImport.importTwitchZip(openPath, data => {
                 data.mods.forEach(mod => {
-                  this.addToJobQueue(mod.mod, "Twitch profile import", mod.file)
+                  this.addToJobQueue(mod.mod, "Twitch profile import", mod.file, {autoFindDependencies: false});
                 })
                 this.$router.go(-1);
               }, update => {
@@ -817,61 +789,6 @@ export default {
         }, 2000);
       }
     },
-
-      /*
-      let profileData;
-      try { 
-        profileData = JSON.parse(fs.readFileSync(openPath))
-        console.log(profileData)
-      } catch {
-        remote.dialog.showErrorBox('Invalid file', 'The JSON parse failed!')
-      }
-
-      if (profileData.magiVersion) {
-        if (profileData.magiVersion == remote.app.getVersion()) {
-          remote.dialog.showMessageBox({
-            type: 'info',
-            title: 'Wait a minute...',
-            message: 'Awesome! Please select a directory for ' + profileData.name + '.'
-          })
-        } else {
-          remote.dialog.showMessageBox({
-            type: 'error',
-            title: 'Wait a minute...',
-            message: 'You\'re on Magi ' + remote.app.getVersion() + ' while the profile you\'re trying to import was on ' + profileData.magiVersion + '. Magi will abort for safety.'
-          })
-          return
-        }
-        if (this.createProfile(profileData.name)) {
-
-          for (let mod in profileData.mods) {
-            setTimeout(() => {
-              console.log("Searching for mod " + profileData.mods[mod].id)
-              Curseforge.getMod(profileData.mods[mod].id).then(modResult => {
-                console.log("Found it! (" + modResult.name + ') Checking for matching hashes')
-                modResult.getFiles({gameVersion: profileData.gameVersion}).then(files => {
-                  for (let file in files) {
-                    if (files[file].file_md5 === profileData.mods[mod].md5) {
-                      console.log("found a matching hatch! awesome!")
-                      //this.addToJobQueue(modResult, profileData.name + ' import', files[file]);
-                    }
-                  }
-                })
-              })
-            }, 1)
-          }
-        } else {
-          console.warn("Profile creation failed, cancelling")
-        }
-      } else {
-        remote.dialog.showMessageBox({
-          type: 'error',
-          title: 'Wait a minute...',
-          message: 'The JSON file you\'re trying to import doesn\'t seem to be a Magi export file! Magi will cancel the operation.'
-        })
-        return
-      }
-    },*/
 
     minimize() {
       remote.getCurrentWindow().minimize()

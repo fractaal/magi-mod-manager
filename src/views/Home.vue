@@ -1,11 +1,15 @@
 <template>
   <div>
-    <h1>Your Mods</h1>
+    <div style="display: flex;">
+      <h1>Your Mods</h1>
+      <TextBox placeholder="Search in your mods..."/>
+    </div>
     <span v-if="mods.length < 1" class="centered">
       <h1>{{titles[randomOne]}}</h1>
       <h3>{{subtitles[randomTwo]}}</h3>
     </span>
-    <div style="max-height: calc(100vh - 190px); overflow-y: auto; display: flex; flex-direction: column;">
+    <br>
+    <div style="max-height: calc(100vh - 220px); overflow-y: auto; display: flex; flex-direction: column;">
       <transition-group name="list" tag="div">
         <HomeCard v-for="mod in mods" :key="mod.id" :mod="mod"></HomeCard>
       </transition-group>
@@ -15,6 +19,7 @@
 
 <script>
 import HomeCard from '../components/HomeCard'
+import TextBox from '../components/TextBox'
 //import WelcomeCard from '../components/WelcomeCard'
 
 export default {
@@ -23,9 +28,11 @@ export default {
       mods: Array,
       appVersion: String,
       changeLogs: Array,
+      yourModsFilter: Object,
       },
   components: {
     HomeCard,
+    TextBox,
     //WelcomeCard,
   },
   data() {
