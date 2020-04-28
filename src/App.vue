@@ -234,10 +234,15 @@ export default {
     });
 
     // View mod details event
-    this.$eventHub.$on('viewModDetails', (pickedMod) => {
-      console.log(pickedMod)
+    this.$eventHub.$on('viewModDetails', async (pickedMod) => {
+
       this.modDetails = 'load'
       this.$router.push('/modDetails');
+
+      if (typeof pickedMod === "number") {
+        pickedMod = await this.getModFromID(pickedMod)
+      }
+      
       pickedMod.getDescription().then(description => {
         this.modDetails = pickedMod
         this.modDetails.description = description;
@@ -456,6 +461,16 @@ export default {
   },
 
   methods: {
+    getModFromID(ID) {
+      return new Promise((resolve, reject) => {
+        Curseforge.getMod(ID).then(mod => {
+          resolve(mod);
+        }).catch(error => {
+          reject(error);
+        })
+      })
+    },
+
     createProfile(name, options = {navigateToHome: true}) {
       let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
 

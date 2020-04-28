@@ -1,6 +1,6 @@
 <template>
   <div class="card" :class="mod.enabled ? '' : 'disabled'" style="flex-grow:1; display: grid; grid-template-columns: 6fr 1fr;">
-    <div style="display: flex;" v-on:click="$eventHub.$emit('')" class=" animate-hover">
+    <div style="display: flex;" v-on:click="() => {getModDetails(mod.id)}" class=" animate-hover">
       <img :src="mod.logo" style="height: 100px; width: 100px; object-fit: contain; margin-right:1em;">
       <div style="display: grid; grid-columns-template: 1fr;">
         <p style="font-size: 2em;">{{mod.name}}</p>
@@ -28,5 +28,10 @@
 export default {
   name: "HomeCard",
   props: ['mod'],
+  methods: {
+    getModDetails(ID) {
+      this.$eventHub.$emit('viewModDetails', ID)
+    }
+  }
 }
 </script>
