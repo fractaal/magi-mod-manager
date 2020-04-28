@@ -293,6 +293,7 @@ export default {
 
     // Configure profile event 
     this.$eventHub.$on('configureProfile', changes => {
+      if (!this.dangerousOperationIsOkay()) return;
       for (let change in changes) {
         console.log(
           "Updating config key " + change + 
@@ -314,6 +315,9 @@ export default {
 
     // Delete profile event
     this.$eventHub.$on('deleteProfile', () => {
+
+      if (!this.dangerousOperationIsOkay()) return;
+
       remote.dialog.showMessageBox({
         type: 'warning',
         buttons: ["Delete the profile", "Delete the profile along with its folder (Deletes /mods and /config)", "No, don't delete it"],
@@ -462,6 +466,9 @@ export default {
 
   methods: {
     dangerousOperationIsOkay() {
+      if (!(this.activeJobs === 0)) {
+        remote.dialog.showErrorBox("Sorry!", "You can't do this at this time; sensitive processes are still going on!")
+      }
       return this.activeJobs === 0 ? true : false
     },
 
@@ -476,6 +483,7 @@ export default {
     },
 
     createProfile(name, options = {navigateToHome: true}) {
+      if (!this.dangerousOperationIsOkay()) return;
       let chosenDirectory = remote.dialog.showOpenDialog({properties: ['openDirectory']});
 
       if (chosenDirectory) {
@@ -711,6 +719,7 @@ export default {
     },
 
     changeProfile(name, options = {save: true}) {
+      if (!this.dangerousOperationIsOkay()) return;
       if (options.save) { this.saveImportantToFile() } // Save the things that need to be persistent accross profiles
       this.stopProfileFolderWatcher() // We want to change the active directory therefore we stop the watcher
 
