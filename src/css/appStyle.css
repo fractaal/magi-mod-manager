@@ -261,6 +261,7 @@
     background-color: rgba(255,255,255,0.75);
 }
 
+/*
 .list-enter-active, .list-leave-active {
   position: absolute;
   transition: all .2s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -273,6 +274,23 @@
 .list-enter, .list-leave-to {
   transform: translateX(50px);
   opacity: 0;
+}*/
+
+.list-item {
+  transition: all .2s;
+}
+
+.list-move {
+  transition: all .2s;
+}
+
+.list-enter, .list-leave-to
+/* .list-complete-leave-active below version 2.1.8 */ {
+  opacity: 0;
+  transform: translateX(50px);
+}
+.list-leave-active {
+  position: absolute;
 }
 
 no-style-type {

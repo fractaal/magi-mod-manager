@@ -2,7 +2,7 @@
   <div>
     <div style="display: flex;">
       <h1>Your Mods</h1>
-      <TextBox placeholder="Search in your mods..."/>
+      <TextBox :onSubmit="onSearchSubmt" placeholder="Search in your mods..."/>
     </div>
     <span v-if="mods.length < 1" class="centered">
       <h1>{{titles[randomOne]}}</h1>
@@ -11,7 +11,7 @@
     <br>
     <div style="max-height: calc(100vh - 220px); overflow-y: auto; display: flex; flex-direction: column;">
       <transition-group name="list" tag="div">
-        <HomeCard v-for="mod in mods" :key="mod.id" :mod="mod"></HomeCard>
+        <HomeCard v-for="mod in filteredMods" :key="mod.id" :mod="mod"></HomeCard>
       </transition-group>
     </div>
   </div>
@@ -28,15 +28,26 @@ export default {
       mods: Array,
       appVersion: String,
       changeLogs: Array,
-      yourModsFilter: Object,
       },
   components: {
     HomeCard,
     TextBox,
     //WelcomeCard,
   },
+  created() {
+    this.$on('change', (input) => {
+      console.log(input)
+      this.filter = input;
+    })
+    this.$on('input', (input) => {
+      console.log(input)
+      this.filter = input;
+    })
+  },
   data() {
     return {
+      countDown: 1000,
+      filter: '',
       titles: [
         'Ayyy lmao', 
         'What\'s up, doc?', 
@@ -58,13 +69,33 @@ export default {
     }
   },
   methods: {
+    onSearchSubmt(input) {
+      this.filter = input;
+    },
     getRandomInt(min, max) {
       min = Math.ceil(min);
       max = Math.floor(max);
       return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+    },
+    sleep(milliseconds) {
+      return new Promise(resolve => setTimeout(resolve, milliseconds))
+    },
   },
   computed: {
+    filteredMods() {
+      let mods = [];
+      this.mods.map((mod) => {
+        let alreadyPushed = false;
+        if ((mod.name.toLowerCase()).search(this.filter) !== -1) {
+          mods.push(mod);
+          alreadyPushed = true;
+        }
+        if (((mod.blurb.toLowerCase()).search(this.filter) !== -1) && !alreadyPushed) {
+          mods.push(mod);
+        }
+      })
+      return mods;
+    },
     randomOne() {
       return this.getRandomInt(0, this.titles.length - 1)
     },

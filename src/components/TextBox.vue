@@ -2,7 +2,7 @@
   <div>
     <form v-on:submit.prevent="onSubmit(userInput, label)" style="position: relative;">
       <label :for="label">{{label}}</label>
-      <input @change="$parent.$emit('change', userInput, label)" :id="label" v-model="userInput" style="height: 30px;" class="textinput" type="text" size="50" :placeholder="placeholder">
+      <input @input="$parent.$emit('input', userInput, label)" @change="$parent.$emit('change', userInput, label)" :id="label" v-model="userInput" style="height: 30px;" class="textinput" type="text" size="50" :placeholder="placeholder">
       <input class="searchButton" type="submit" hidden>
       <i class="fa" :class="icon" style="color: #fff; position:absolute; top: 18px; right: 15px;"></i>
     </form>

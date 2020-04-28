@@ -1,5 +1,5 @@
 <template>
-  <div class="card" :class="mod.enabled ? '' : 'disabled'" style="flex-grow:1; display: grid; grid-template-columns: 6fr 1fr;">
+  <div class="card list-item" :class="mod.enabled ? '' : 'disabled'" style="flex-grow:1; display: grid; grid-template-columns: 6fr 1fr;">
     <div style="display: flex;" v-on:click="() => {getModDetails(mod.id)}" class=" animate-hover">
       <img :src="mod.logo" style="height: 100px; width: 100px; object-fit: contain; margin-right:1em;">
       <div style="display: grid; grid-columns-template: 1fr;">
