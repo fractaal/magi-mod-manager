@@ -461,6 +461,10 @@ export default {
   },
 
   methods: {
+    dangerousOperationIsOkay() {
+      return this.activeJobs === 0 ? true : false
+    },
+
     getModFromID(ID) {
       return new Promise((resolve, reject) => {
         Curseforge.getMod(ID).then(mod => {
