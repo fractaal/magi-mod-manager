@@ -5,7 +5,7 @@
       <p style="margin-right: 2em;">Downloads queued: {{jobQueueLength}}</p>
       <p>Active downloads: {{activeJobs}}</p>
     </div>
-    <div style="display: flex; flex-direction: column; overflow-y: auto; max-height: calc(100vh - 200px); overflow-x: hidden;">
+    <div style="display: flex; flex-direction: column; overflow-y: auto; min-height: calc(100vh - 200px); max-height: calc(100vh - 200px); overflow-x: hidden;">
       <ul>
         <transition-group name="list" tag="div">
           <JobCard v-for="job in jobQueue" :key="job.key" :job="job" class="list-item no-style-type" style="flex-grow: 1;"></JobCard>

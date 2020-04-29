@@ -9,7 +9,7 @@
       <h3>{{subtitles[randomTwo]}}</h3>
     </span>
     <br>
-    <div style="max-height: calc(100vh - 220px); overflow-y: auto; display: flex; flex-direction: column;">
+    <div style="min-height: calc(100vh - 220px); max-height: calc(100vh - 220px); overflow-y: auto; display: flex; flex-direction: column;">
       <transition-group name="list" tag="div">
         <HomeCard v-for="mod in filteredMods" :key="mod.id" :mod="mod"></HomeCard>
       </transition-group>

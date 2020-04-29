@@ -9,7 +9,7 @@
     <br>
     <div style="max-height: calc(100vh - 209px); overflow-y: auto;">
       <span v-if="modSearchResults.length == 0 && !noResultFound">
-        <div v-for="index in 10" :key="index" class="card shimmer" style="height: 5em;"></div>
+        <div v-for="index in 10" :key="index" class="card-flush shimmer" style="height: 6em;"></div>
       </span>
       <transition name="fade">
         <div v-if="noResultFound" style="height: 75vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -26,7 +26,7 @@
               <div style="display: flex;" v-on:click="$eventHub.$emit('viewModDetails', modSearchResult)" class=" animate-hover">
                 <img :src="modSearchResult.logo.thumbnailUrl" style="height: 100px; width: 100px; object-fit: contain; margin-right:1em;">
                 <div style="display: grid; grid-columns-template: 1fr;">
-                  <p style="font-size: 2em; font-weight: 900;">{{modSearchResult.name}}</p>
+                  <p style="font-size: 2em; font-weight: bold;">{{modSearchResult.name}}</p>
                   <p>By <b>{{modSearchResult.authors[0].name}}</b></p>
                   <p>{{modSearchResult.summary}}</p>
                 </div>

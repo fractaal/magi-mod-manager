@@ -8,52 +8,53 @@
 }
 
 .progress {
-  height: 5px;
+  height: 7px;
   background: #fff;
   margin-top: 5px;
   margin-bottom: 5px;
-  border-radius: 2px;
+  border-radius: 5px;
 }
 
 .progress > span {
   display: block;
   height: 100%;
-  background-color: #424B54;
+  background-color: #F39C6B;
   position: relative;
   overflow: hidden;
   border-radius: 2px;
 }
 
 .jobCard {
-  background-color: #343434;
-  color: #EBF6F1;
+  padding: 20px 15px 20px 15px;
+  transition: all 0s;
+  border-radius: 10px;
+}
 
-  margin: 10px;
-  padding: 10px;
-
-  border-radius: 15px;
-
-  /*transition: background-color 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);*/
+.jobCard:hover {
+  background-color: rgba(255,255,255,0.1);
 }
 
 .success {
-  background-color: #94B0DA;
+  background-color: rgba(214,255,246,0.25);
 }
 
 .failed {
-  background-color: #B48291;
+  background-color: rgba(255, 158, 157, 0.25);
   animation: failed 1s cubic-bezier(0.455, 0.03, 0.515, 0.955) 1s infinite;
 }
 
 @keyframes failed {
   0% {
     filter: brightness(1);
+    transform: scale(1);
   }
   50% {
     filter: brightness(1.25);
+    transform: scale(.975);
   }
   100% {
     filter: brightness(1);
+    transform: scale(1);
   }
 }
 
@@ -73,12 +74,13 @@
 
 .card-flush {
   padding: 20px 10px 20px 40px;
+  margin: 10px;
   transition: all 0s;
   border-radius: 15px;
 }
 
 .card-flush:nth-child(odd) {
-  background-color: rgba(0,0,0,.1);
+  background-color: rgba(0,0,0,.05);
 }
 
 .card-flush:hover {
@@ -86,15 +88,13 @@
 }
 
 .disabled {
-  background-color: #4D6453;
-  color: #66856F;
-  filter: saturate(0.5);
+  filter: brightness(0.15) saturate(0); 
 }
 
 .hover-shine {
   /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
   transition: all 0s;
-  filter: opacity(0.25);
+  filter: opacity(0.5);
 }
 
 .hover-shine:hover {

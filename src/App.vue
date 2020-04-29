@@ -34,10 +34,12 @@
     <div class="wrapper" style="overflow:hidden;">
       <div class="routerViewColor">
         <transition name="fade">
-          <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
-                        :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
-                        :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"
-                        :profiles="profiles" :config="this.config" :importStatus="importStatus"/>
+          <keep-alive>
+            <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
+                          :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
+                          :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"
+                          :profiles="profiles" :config="this.config" :importStatus="importStatus"/>
+          </keep-alive>
         </transition>
       </div>
       <JobQueue :jobQueue="jobQueue" :maxActiveJobs="maxActiveJobs" :activeJobs="activeJobs" :jobQueueIndex="jobQueueIndex"></JobQueue>
@@ -436,7 +438,9 @@ export default {
 
                 this.activeJobs--
 
-                this.removeFromJobQueue(job.key)
+                setTimeout(() => {
+                  this.removeFromJobQueue(job.key)
+                }, 3000)
 
               }).catch(error => {
                 job.progress = 1;
