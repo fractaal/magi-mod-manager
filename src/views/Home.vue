@@ -86,11 +86,11 @@ export default {
       let mods = [];
       this.mods.map((mod) => {
         let alreadyPushed = false;
-        if ((mod.name.toLowerCase()).search(this.filter) !== -1) {
+        if ((mod.name.toLowerCase()).search(this.filter.toLowerCase()) !== -1) {
           mods.push(mod);
           alreadyPushed = true;
         }
-        if (((mod.blurb.toLowerCase()).search(this.filter) !== -1) && !alreadyPushed) {
+        if (((mod.blurb.toLowerCase()).search(this.filter.toLowerCase()) !== -1) && !alreadyPushed) {
           mods.push(mod);
         }
       })

@@ -1,8 +1,8 @@
 <template>
   <div id="app" style="overflow: hidden;">
     <div class="topBarColor">
-      <div style="display: flex; flex-direction: row; margin-bottom: -20px; -webkit-app-region: drag;">
-        <p style="padding-top: 5px; padding-left: 10px; font-size: 14px;">Magi {{appVersion}}</p>
+      <div style="display: flex; flex-direction: row; margin-bottom: -10px; -webkit-app-region: drag;">
+        <p style="padding-top: 10px; padding-left: 10px; font-size: 16px;">Magi Mod Manager {{appVersion}}</p>
         <span style="margin-left: auto;">
           <button v-on:click="minimize" class="titleBarButton" style="position: relative; top: 0px; right: 1px;"><i class="fa fa-window-minimize"></i></button>
           <button v-on:click="maximize" class="titleBarButton" style="position: relative; top: 0px; right: 1px;"><i class="fa fa-window-maximize"></i></button>
@@ -10,18 +10,26 @@
         </span>
       </div>
       <div style="display: flex; padding: 20px;">
-        <span>
-          <img src="./assets/100px.png" style="width: 60px; height: 60px; cursor: pointer;" v-on:click="showMessageBox('Brought to you by Ben with love')">
+        <span style="display: flex;">
+          <span>
+            <img src="./assets/100px.png" style="width: 60px; height: 60px; cursor: pointer;" v-on:click="showMessageBox('Brought to you by Ben with love')">
+          </span>
+          <span style="margin-left:10px;">
+            <h3 class="white-text">{{config.activeProfile.name}}</h3>
+            <p class="white-text" style="font-size: 14px;">{{profileStatusString}}</p>
+            <p class="white-text" style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
+          </span>
         </span>
-        <span style="margin-left:10px;">
-          <h3 class="white-text">{{config.activeProfile.name}}</h3>
-          <p class="white-text" style="font-size: 14px;">{{config.activeProfile.mods.length}} mods active</p>
-          <p class="white-text" style="font-size: 14px;">Minecraft {{config.activeProfile.version}}</p>
-        </span>
-        <button class="input" @click="() => exportImportMenu.popup()" style="height: 3.5em;"><i class="fa fa-cog fa-lg"></i></button>
-        <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
-        <button class="input" @click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
-        <TextBox :onSubmit="modSearch" placeholder="Search for new mods..." icon="fa-search"/>
+
+        <div style="display: flex;">
+          <button class="input" @click="() => exportImportMenu.popup()" style="height: 3.5em;"><i class="fa fa-cog fa-lg"></i></button>
+          <router-link to="/"><button style="height: 3.5em;" class="input"><i class="fa fa-home fa-lg"></i></button></router-link>
+          <button class="input" @click="searchHome" style="height: 3.5em;"><i class="fa fa-search fa-lg" ></i></button>
+        </div>
+
+        <div style="display: flex;">
+          <TextBox :onSubmit="modSearch" placeholder="Search for new mods..." icon="fa-search"/>
+        </div>
         <!--
         <form v-on:submit.prevent="modSearch" style="position: relative;">
           <input v-model="modSearchTerm" style="height: 30px;" class="textinput" type="text" size="50" placeholder="Search...">
@@ -850,6 +858,18 @@ export default {
 
     readProfiles() {
       return fs.readdirSync(AppPath + '/profiles').map(value => {return path.basename(value, '.json')});
+    }
+  },
+
+  computed: {
+    profileStatusString() {
+      let enabledMods = 0;
+      let disabledMods = 0;
+      this.config.activeProfile.mods.map(mod => {
+        if (mod.enabled) enabledMods++;
+        else disabledMods++;
+      })
+      return `${enabledMods} active mods, ${disabledMods} disabled`
     }
   }
 }
