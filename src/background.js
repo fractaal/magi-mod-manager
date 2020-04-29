@@ -36,6 +36,8 @@ autoUpdater.on('update-downloaded', () => {
   })
 })
 
+app.setAppUserModelId(process.execPath); // For notifications
+
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: { secure: true, standard: true } }])
 
