@@ -1,7 +1,7 @@
 * {
   padding: 0;
   margin: 0;
-  font-family: 'Manrope' sans-serif;
+  font-family: 'Manrope', 'Arial', sans-serif;
   transition: 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
   color: #fff;
   user-select: none;
