@@ -455,6 +455,8 @@ export default {
                 job.operation = 'Failed'
                 job.auxiliary = error
 
+                let notif = new Notification(`${job.mod.name} failed to download!`, {body: error}).show();
+
                 this.activeJobs--
 
                 //this.removeFromJobQueue(job.key)
