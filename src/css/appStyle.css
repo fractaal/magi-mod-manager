@@ -71,6 +71,20 @@
   /*transition: 0.2s;*/
 }
 
+.card-flush {
+  padding: 20px 10px 20px 40px;
+  transition: all 0s;
+  border-radius: 15px;
+}
+
+.card-flush:nth-child(odd) {
+  background-color: rgba(0,0,0,.1);
+}
+
+.card-flush:hover {
+  background-color: rgba(255,255,255,.1)
+}
+
 .disabled {
   background-color: #4D6453;
   color: #66856F;
@@ -79,11 +93,12 @@
 
 .hover-shine {
   /*transition: 0.15s cubic-bezier(0.55, 0.085, 0.68, 0.53);*/
-  filter:brightness(.9)
+  transition: all 0s;
+  filter: opacity(0.25);
 }
 
 .hover-shine:hover {
-  filter:brightness(1.1);
+  filter: opacity(1);
   cursor:pointer;
 }
 
@@ -289,6 +304,11 @@
   opacity: 0;
   transform: translateX(50px);
 }
+
+.list-leave-to {
+  position: absolute;
+}
+
 .list-leave-active {
   position: absolute;
 }

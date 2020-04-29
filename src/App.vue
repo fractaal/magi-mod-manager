@@ -378,7 +378,7 @@ export default {
     if (!jobManager) {
       jobManager = setInterval(() => {
 
-        console.log(this.jobQueue[this.jobQueueIndex]);
+        //console.log(this.jobQueue[this.jobQueueIndex]);
 
         if (this.jobQueue.length == 0 || this.jobQueueIndex >= (this.jobQueue.length) || !this.jobQueue[this.jobQueueIndex]) { 
           this.jobQueueIndex = 0; 

@@ -22,7 +22,7 @@
             <h2 v-if="modSearchTerm">Results for {{modSearchTerm}}</h2>
           </transition>
           <transition-group name="fade">
-            <div v-for="modSearchResult in modSearchResults" :key="modSearchResult.id" class="card" style="display: grid; grid-template-columns: 3fr 1fr;">
+            <div v-for="modSearchResult in modSearchResults" :key="modSearchResult.id" class="card-flush" style="display: grid; grid-template-columns: 5fr 2fr;">
               <div style="display: flex;" v-on:click="$eventHub.$emit('viewModDetails', modSearchResult)" class=" animate-hover">
                 <img :src="modSearchResult.logo.thumbnailUrl" style="height: 100px; width: 100px; object-fit: contain; margin-right:1em;">
                 <div style="display: grid; grid-columns-template: 1fr;">
@@ -31,10 +31,12 @@
                   <p>{{modSearchResult.summary}}</p>
                 </div>
               </div>
-              <span class="hover-shine" v-on:click="$eventHub.$emit('startDownload', modSearchResult)">
-                <i style="display: flex; justify-content: center;" class="fa fa-arrow-circle-down fa-4x"></i>
-                <h4 style="display: flex; justify-content: center;">Download</h4>
+              <div style="display: flex; align-items: center; justify-content: center;">
+                <span class="hover-shine" v-on:click="$eventHub.$emit('startDownload', modSearchResult)">
+                  <i style="display: flex; justify-content: center;" class="fa fa-arrow-circle-down fa-4x"></i>
+                  <h4 style="display: flex; justify-content: center;">Download</h4>
               </span>
+              </div>
             </div>
           </transition-group>
         </div>

@@ -2,10 +2,10 @@
   <div class="home">
     <div class="centered" v-if="modDetails === 'load'">
       <Spinner/>
-      <p>Contacting server...</p>
+      <p>Loading details...</p>
     </div>
     <transition name="fade">
-      <div v-if="modDetails !== 'load'" style="display: grid; grid-columns-template: 1fr; max-height: 80vh; overflow: auto; margin-left:1em; margin-right:1em;">
+      <div v-if="modDetails !== 'load'" style="display: grid; height: calc(100vh - 150px); overflow: auto; margin-left:1em; margin-right:1em;">
         <br>
         <button style="margin-left:20px; margin-right:20px; margin-bottom: 20px;" class="input-not-round" @click="$router.go(-1)">Go Back</button>
         <div style="display: flex;">

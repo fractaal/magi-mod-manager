@@ -1,5 +1,5 @@
 <template>
-  <div class="card list-item" :class="mod.enabled ? '' : 'disabled'" style="flex-grow:1; display: grid; grid-template-columns: 6fr 1fr;">
+  <div class="card-flush list-item no-style-type" :class="mod.enabled ? '' : 'disabled'" style="flex-grow:1; display: grid; grid-template-columns: 5fr 2fr;">
     <div style="display: flex;" v-on:click="() => {getModDetails(mod.id)}" class=" animate-hover">
       <img :src="mod.logo" style="height: 100px; width: 100px; object-fit: contain; margin-right:1em;">
       <div style="display: grid; grid-columns-template: 1fr;">
@@ -9,13 +9,12 @@
         <p v-if="mod.reason != 'User initiated'">{{mod.reason}}</p>
       </div>
     </div>
-    <div>
-      <span class="hover-shine" v-on:click="$eventHub.$emit('deleteMod', mod)">
+    <div style="display: flex; align-items: center; justify-content: center;">
+      <span style="" class="hover-shine" v-on:click="$eventHub.$emit('deleteMod', mod)">
         <i style="display: flex; justify-content: center;" class="fa fa-trash-o fa-2x"></i>
         <h4 style="display: flex; justify-content: center;">Delete</h4>
       </span>
-      <br>
-      <span class="hover-shine" v-on:click="$eventHub.$emit('disableMod', mod)">
+      <span style="margin-left: 50px;" class="hover-shine" v-on:click="$eventHub.$emit('disableMod', mod)">
         <i style="display: flex; justify-content: center;" class="fa fa-power-off fa-2x"></i>
         <h4 style="display: flex; justify-content: center;">{{mod.enabled ? 'Disable' : 'Enable'}}</h4>
       </span>
