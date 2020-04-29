@@ -1,7 +1,7 @@
 * {
   padding: 0;
   margin: 0;
-  font-family: 'Manrope';
+  font-family: 'Manrope' sans-serif;
   transition: 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
   color: #fff;
   user-select: none;
@@ -80,15 +80,15 @@
 }
 
 .card-flush:nth-child(odd) {
-  background-color: rgba(0,0,0,.05);
+  background-color: rgba(0,0,0,0.05);
 }
 
 .card-flush:hover {
-  background-color: rgba(255,255,255,.1)
+  background-color: rgba(255,255,255,0.1);
 }
 
 .disabled {
-  filter: brightness(0.15) saturate(0); 
+  filter: brightness(0.15) saturate(0);
 }
 
 .hover-shine {
@@ -162,17 +162,17 @@
 }
 
 .input-highlight {
-  background-color: rgba(122,214,82,.1)
+  background-color: rgba(122,214,82,0.1);
 }
 
 .input-highlight-danger {
-  background-color: rgba(255,0,0,.1)
+  background-color: rgba(255,0,0,0.1);
 }
 
 .input-not-round:hover {
   padding-left: 30px;
   padding-right: 30px;
-  background-color: rgba(0,0,0,.1)
+  background-color: rgba(0,0,0,0.1);
 }
 
 .input:hover {
@@ -193,8 +193,8 @@
 }
 
 .topBarColor {
-  background: rgb(255,95,136);
-  background: linear-gradient(90deg, rgba(255,95,136,1) 0%, rgba(255,201,125,1) 100%);
+  background: rgb(255, 95, 136);
+  background: linear-gradient(90deg, rgba(255, 95, 136, 1) 0%, rgba(255, 201, 125, 1) 100%);
 }
 
 .routerViewColor {
@@ -207,48 +207,48 @@
 
 .shimmer {
   animation: shimmer 0.5s cubic-bezier(0.445, 0.05, 0.55, 0.95) 0s infinite;
-  color:rgba(0, 0, 0, .2);
-  background-color: rgba(0, 0, 0, .2);
+  color:rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 .shimmer-text {
   animation: shimmer-text 0.5s cubic-bezier(0.445, 0.05, 0.55, 0.95) 0s infinite;
-  color:rgba(255, 255, 255, .75);
+  color:rgba(255, 255, 255, 0.75);
 }
 
 @keyframes shimmer-text {
   0% {
-    color:rgba(255, 255, 255, .75);
+    color:rgba(255, 255, 255, 0.75);
   }
 
   50% {
-    color:rgba(255, 255, 255, .25);
+    color:rgba(255, 255, 255, 0.25);
   }
 
   100% {
-    color:rgba(255, 255, 255, .75);
+    color:rgba(255, 255, 255, 0.75);
   }
 }
 
 @keyframes shimmer {
   0% {
-    color: rgba(0, 0, 0, .3);
-    background-color: rgba(0, 0, 0, .3);
+    color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
   }
 
   50% {
     color: rgba(0, 0, 0, .2);
-    background-color: rgba(0, 0, 0, .2);
+    background-color: rgba(0, 0, 0, 0.2);
   }
 
   100% {
     color: rgba(0, 0, 0, .3);
-    background-color: rgba(0, 0, 0, .3);
+    background-color: rgba(0, 0, 0, 0.3);
   }
 }
 
 .fade-enter-active {
-  transition: opacity .25s;
+  transition: opacity 0.25s;
 }
 
 .fade-leave-active {

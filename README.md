@@ -2,11 +2,11 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9488cb8874834fa48affc2a2d767bde5)](https://app.codacy.com/manual/fractaal/archon-mod-manager?utm_source=github.com&utm_medium=referral&utm_content=fractaal/archon-mod-manager&utm_campaign=Badge_Grade_Dashboard)
 
-<font color="red">Alpha stage</font>, features may break or not work at all!!!
+## Features may break or not work at all!!!
 
 [![Magi](https://imgur.com/E6KB7Er.jpg)](https://imgur.com/E6KB7Er)
 
-Hi! Welcome to Magi, a Minecraft Forge mod manager that envisions to be an open-source alternative to apps like Twitch! It uses the Curseforge API to search for mods, just like Twitch, but less invasive and more transparent.
+### Hi! Welcome to Magi, a Minecraft Forge mod manager that envisions to be an open-source alternative to apps like Twitch! It uses the Curseforge API to search for mods, just like Twitch, but less invasive and more transparent.
 
 #### Powered by mc-curseforge-api
 Magi's internal search function is powered by Mondanzo's [mc-curseforge-api](https://github.com/Mondanzo/mc-curseforge-api "mc-curseforge-api")!
@@ -22,10 +22,9 @@ Magi automatically finds any .jar files in the mod directory it doesn't recogniz
 
 ### Installation
 Grab the latest release from the releases tab of this repository!
-#### However...
+#### However
 If you don't trust me and you'd prefer to create your own verified installer, run the command
-```
+```bash
 npm run electron:build
 ```
 and, if you really really don't trust me, you can delve into the code yourself and see for yourself that I didn't do any sneaky stuff.
-
