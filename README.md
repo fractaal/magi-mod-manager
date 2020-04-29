@@ -1,6 +1,6 @@
 # Magi v1.7.0
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9488cb8874834fa48affc2a2d767bde5)](https://app.codacy.com/manual/fractaal/archon-mod-manager?utm_source=github.com&utm_medium=referral&utm_content=fractaal/archon-mod-manager&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d0a20cc5f3c1458585d522960c80238a)](https://www.codacy.com/manual/fractaal/magi-mod-manager?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fractaal/magi-mod-manager&amp;utm_campaign=Badge_Grade)
 
 ## Features may break or not work at all!!!
 
