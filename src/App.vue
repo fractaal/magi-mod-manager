@@ -112,7 +112,7 @@ export default {
     } catch(error) {
       console.warn("Version manifest request failed! Falling back to on-disk version manifest...", error)
       try {
-        minecraftVersions = JSON.parse(fs.readlinkSync(AppPath + '/version_manifest.json'));
+        minecraftVersions = JSON.parse(fs.readlinkSync(path.normalize(AppPath + '/version_manifest.json')));
       } catch (error) {
         console.error("On disk version manifest read failed! Magi can't start!")
         remote.dialog.showErrorBox("Version manifest request failed", "Online and on-disk version manifest data reads failed! Magi can't start! " + error);
