@@ -65,6 +65,7 @@ const size = require('filesize').partial({standard: "iec"}) // Filesize formatti
 const utility = require('./utility');
 const twitchImport = require('./twitchImport');
 const requestSync = require('sync-request');
+const smartDownload = require('./smartDownload');
 
 import JobQueue from './components/JobQueue'
 import TextBox from './components/TextBox'
@@ -226,6 +227,9 @@ export default {
       for (let mod in this.config.activeProfile.mods) {
         if (this.config.activeProfile.mods[mod].file_name == pickedMod.file_name) {
           this.config.activeProfile.mods.splice(mod, 1);
+          
+          smartDownload.remove(pickedMod.file_name);
+
         }
       }
         this.saveImportantToFile()
@@ -432,6 +436,52 @@ export default {
               })
             }
 
+            // Check if it already exists
+            if (fs.existsSync(path.normalize(this.config.activeProfile.instanceDirectory + "/mods/" + job.file_name))) {
+              job.progress = 1;
+              job.operation = "Complete";
+              job.auxiliary = "File already exists!";
+              console.log(path)
+
+              this.addToMods(job.mod, {reason: job.reason, file_name: job.file_name});
+
+              this.activeJobs--
+
+              setTimeout(() => {
+                this.removeFromJobQueue(job.key)
+              }, 3000)
+
+              return;
+            }
+
+            // Check if it's available in smart download
+            let smartDownloadFile = smartDownload.isAvailable(job.file_name);
+
+            if (smartDownloadFile) {
+              console.log("Smart download available for " + job.file_name);
+              try {
+                fs.copyFileSync(smartDownloadFile, path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + job.file_name))
+
+                job.progress = 1;
+                job.operation = "Complete";
+                job.auxiliary = size(job.file_size) + " (smart download)";
+
+                this.addToMods(job.mod, {reason: job.reason, file_name: job.file_name});
+
+                this.activeJobs--
+
+                setTimeout(() => {
+                  this.removeFromJobQueue(job.key)
+                }, 3000)
+
+                return;
+
+              } catch(error) {
+                console.warn("Smart download: failed ", error);
+                fs.unlinkSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + job.file_name));
+              }
+            }
+
             job.file.download(
               this.config.activeProfile.instanceDirectory + '/mods/' + job.file_name, // Path
               true, // Overwrite existing
@@ -450,6 +500,8 @@ export default {
                   this.removeFromJobQueue(job.key)
                 }, 3000)
 
+                return;
+
               }).catch(error => {
                 job.progress = 1;
                 job.operation = 'Failed'
@@ -459,7 +511,7 @@ export default {
 
                 this.activeJobs--
 
-                //this.removeFromJobQueue(job.key)
+                return;
               })
 
           }, 1) // (Spawn it after 1 ms)
@@ -588,6 +640,9 @@ export default {
           id: Date.now(),
         })
       }
+      // Add to the smart downloads list
+      smartDownload.add(payload.file_name, this.config.activeProfile.instanceDirectory + "/mods/" + payload.file_name);
+
       this.saveImportantToFile();
     },
 
@@ -660,6 +715,7 @@ export default {
       console.log("Saving to file");
       fs.writeFileSync(path.normalize(AppPath +  '/profiles/' + this.config.activeProfile.name + '.json'), JSON.stringify(this.config))
       fs.writeFileSync(path.normalize(AppPath + '/appSettings.json'), JSON.stringify(this.appSettings))
+      smartDownload.save();
     },
 
     modExistsInProfile(_mod) {
@@ -685,7 +741,7 @@ export default {
         console.warn("Profile folder watcher already active")
         return;
       }
-      if (!fs.existsSync(path.normalize(this.config.activeProfile.instanceDirectory) + '/mods')) {
+      if (!fs.existsSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods'))) {
         fs.mkdirSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods'))
       }
 

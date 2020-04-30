@@ -90,9 +90,11 @@ export default {
           mods.push(mod);
           alreadyPushed = true;
         }
-        if (((mod.blurb.toLowerCase()).search(this.filter.toLowerCase()) !== -1) && !alreadyPushed) {
-          mods.push(mod);
-        }
+        try {
+          if (((mod.blurb.toLowerCase()).search(this.filter.toLowerCase()) !== -1) && !alreadyPushed) {
+            mods.push(mod);
+          }
+        } catch(error) {console.warn("Error while trying to get blurb ", error)}
       })
       return mods;
     },
