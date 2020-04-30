@@ -122,21 +122,21 @@ export default {
     
 
     // Initialize this if the app has no existing configuration (first time run)
-    if (!fs.existsSync(AppPath + '/profiles')) {
-      fs.mkdirSync(AppPath + '/profiles')
+    if (!fs.existsSync(path.normalize(AppPath + '/profiles'))) {
+      fs.mkdirSync(path.normalize(AppPath + '/profiles'))
     }
 
-    if (!fs.existsSync(AppPath + '/appSettings.json')) { // Profile-agnostic app settings
-      fs.writeFileSync(AppPath + '/appSettings.json', JSON.stringify(appSettingsTemplate))
+    if (!fs.existsSync(path.normalize(AppPath + '/appSettings.json'))) { // Profile-agnostic app settings
+      fs.writeFileSync(path.normalize(AppPath + '/appSettings.json'), JSON.stringify(appSettingsTemplate))
     }
 
-    let appSettings = JSON.parse(fs.readFileSync(AppPath + '/appSettings.json'))
+    let appSettings = JSON.parse(fs.readFileSync(path.normalize(AppPath + '/appSettings.json')))
 
-    if (!fs.existsSync(AppPath + '/profiles/' + appSettings.activeProfile + '.json')) {
-      fs.writeFileSync(AppPath +  '/profiles/' + appSettings.activeProfile + '.json', JSON.stringify(configTemplate))
+    if (!fs.existsSync(path.normalize(AppPath + '/profiles/' + appSettings.activeProfile + '.json'))) {
+      fs.writeFileSync(path.normalize(AppPath +  '/profiles/' + appSettings.activeProfile + '.json'), JSON.stringify(configTemplate))
     }
 
-    let config = JSON.parse(fs.readFileSync(AppPath + '/profiles/' + appSettings.activeProfile + '.json'))
+    let config = JSON.parse(fs.readFileSync(path.normalize(AppPath + '/profiles/' + appSettings.activeProfile + '.json')))
     
     // Export/import menu items
     var exportImportMenu = remote.Menu.buildFromTemplate([
@@ -215,9 +215,9 @@ export default {
       
       try {
         if (pickedMod.enabled) {
-          fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name)
+          fs.unlinkSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name))
         } else {
-          fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled')
+          fs.unlinkSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled'))
         }
       } catch {
         console.warn("Mod file was already deleted or the object does not have the .enabled key");
@@ -234,10 +234,10 @@ export default {
     // Disable mod event
     this.$eventHub.$on('disableMod', (pickedMod) => {
       if (pickedMod.enabled) {
-        fs.renameSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name, this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled')
+        fs.renameSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name), this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled')
           pickedMod.enabled = false
       } else {
-        fs.renameSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled', this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name)
+        fs.renameSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name + '.disabled'), this.config.activeProfile.instanceDirectory + '/mods' + '/' + pickedMod.file_name)
           pickedMod.enabled = true
       }
       this.saveImportantToFile()
@@ -312,8 +312,8 @@ export default {
 
         if (change == 'name') {
           fs.renameSync(
-            AppPath + '/profiles/' + this.config.activeProfile.name + '.json',
-            AppPath + '/profiles/' + changes[change] + '.json' // change the name in advance so that changeProfile doesn't break
+            path.normalize(AppPath + '/profiles/' + this.config.activeProfile.name + '.json'),
+            path.normalize(AppPath + '/profiles/' + changes[change] + '.json') // change the name in advance so that changeProfile doesn't break
             )
         }
 
@@ -340,8 +340,8 @@ export default {
         if (response === 1) {
           console.warn("Performing dangerous operation!")
           try {
-            fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/mods/')
-            fs.unlinkSync(this.config.activeProfile.instanceDirectory + '/config/')
+            fs.unlinkSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods/'))
+            fs.unlinkSync(path.normalize(this.config.activeProfile.instanceDirectory + '/config/'))
           } catch(error) {
             console.warn("Dangerous operation failed ", error);
             remote.dialog.showMessageBox({
@@ -351,7 +351,7 @@ export default {
             })
           }
         }
-        fs.unlinkSync(AppPath + '/profiles/' + this.config.activeProfile.name + '.json')
+        fs.unlinkSync(path.normalize(AppPath + '/profiles/' + this.config.activeProfile.name + '.json'))
         delete this.config.activeProfile; 
 
         this.changeProfile('Default', {save: false});
@@ -369,7 +369,7 @@ export default {
     // Watch profile folder
     if (!this.profileListWatcher) {
       console.log("Starting profile list watcher")
-      this.profileListWatcher = fs.watch(AppPath + '/profiles', () => {
+      this.profileListWatcher = fs.watch(path.normalize(AppPath + '/profiles'), () => {
         this.profiles = this.readProfiles()
       })
     } else {
@@ -505,8 +505,8 @@ export default {
         configToSave.activeProfile.name = name
         configToSave.activeProfile.instanceDirectory = chosenDirectory[0]
 
-        if (!fs.existsSync(AppPath + '/profiles/' + name + '.json')) {
-          fs.writeFileSync(AppPath +  '/profiles/' + name + '.json', JSON.stringify(configToSave))
+        if (!fs.existsSync(path.normalize(AppPath + '/profiles/' + name + '.json'))) {
+          fs.writeFileSync(path.normalize(AppPath +  '/profiles/' + name + '.json'), JSON.stringify(configToSave))
         } else {
           remote.dialog.showErrorBox('Profile exists already', name + ' already exists!')
           return false;
@@ -658,8 +658,8 @@ export default {
 
     saveImportantToFile() {
       console.log("Saving to file");
-      fs.writeFileSync(AppPath +  '/profiles/' + this.config.activeProfile.name + '.json', JSON.stringify(this.config))
-      fs.writeFileSync(AppPath + '/appSettings.json', JSON.stringify(this.appSettings))
+      fs.writeFileSync(path.normalize(AppPath +  '/profiles/' + this.config.activeProfile.name + '.json'), JSON.stringify(this.config))
+      fs.writeFileSync(path.normalize(AppPath + '/appSettings.json'), JSON.stringify(this.appSettings))
     },
 
     modExistsInProfile(_mod) {
@@ -685,24 +685,24 @@ export default {
         console.warn("Profile folder watcher already active")
         return;
       }
-      if (!fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods')) {
-        fs.mkdirSync(this.config.activeProfile.instanceDirectory + '/mods')
+      if (!fs.existsSync(path.normalize(this.config.activeProfile.instanceDirectory) + '/mods')) {
+        fs.mkdirSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods'))
       }
 
       console.log("Starting new profile folder watcher for " + this.config.activeProfile.name)
 
-      this.profileFolderWatcher = fs.watch(this.config.activeProfile.instanceDirectory + '/mods', (eventType, filename) => {
+      this.profileFolderWatcher = fs.watch(path.normalize(this.config.activeProfile.instanceDirectory + '/mods'), (eventType, filename) => {
         console.log(eventType, filename)
         if (eventType == "rename") {
           if (path.extname(filename) == ".disabled") { // Something has happened to a .disabled file
-            if (fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + path.basename(filename, '.disabled'))) { // If the file now has the .jar extension
+            if (fs.existsSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + '/' + path.basename(filename, '.disabled')))) { // If the file now has the .jar extension
               console.warn("it was just enabled, silly me!")
               return; // It was just enabled
             } else {
               this.$eventHub.$emit('deleteMod', {file_name: filename});
             }
           } else if (path.extname(filename) == ".jar") { // Something has happened to a .jar file
-            if (fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + filename)) {
+            if (fs.existsSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + '/' + filename))) {
               for (let mod in this.config.activeProfile.mods) {
                 if (this.config.activeProfile.mods[mod].file_name == filename) {
                   return;
@@ -715,7 +715,7 @@ export default {
               }
               console.warn(".jar file was added outside of Magi");
               this.addToMods(null, {file_name: filename, reason: "Added manually outside of Magi"})
-            } else if (fs.existsSync(this.config.activeProfile.instanceDirectory + '/mods' + '/' + filename + '.disabled')) {
+            } else if (fs.existsSync(path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + '/' + filename + '.disabled'))) {
               console.warn("it was just disabled, silly me!")
               return // it was just disabled
             } else {
@@ -739,7 +739,7 @@ export default {
 
       console.log("Switching from " + this.appSettings.activeProfile + " to " + name)
       this.appSettings.activeProfile = name;
-      this.config = JSON.parse(fs.readFileSync(AppPath + '/profiles/' + this.appSettings.activeProfile + '.json'))
+      this.config = JSON.parse(fs.readFileSync(path.normalize(AppPath + '/profiles/' + this.appSettings.activeProfile + '.json')))
 
       this.startProfileFolderWatcher()
       this.saveImportantToFile()
@@ -859,7 +859,7 @@ export default {
     },
 
     readProfiles() {
-      return fs.readdirSync(AppPath + '/profiles').map(value => {return path.basename(value, '.json')});
+      return fs.readdirSync(path.normalize(AppPath + '/profiles')).map(value => {return path.basename(value, '.json')});
     }
   },
 

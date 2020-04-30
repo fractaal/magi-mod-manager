@@ -6,35 +6,10 @@ import {
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
 const isDevelopment = process.env.NODE_ENV !== 'production'
-const { autoUpdater } = require('electron-updater')
+import { autoUpdater } from "electron-updater"
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
-autoUpdater.checkForUpdatesAndNotify()
-
-autoUpdater.on('error', error => {
-  dialog.showMessageBox({
-    type: 'error',
-    title: 'Update failed',
-    message: error
-  })
-})
-
-autoUpdater.on('update-available', () => {
-  dialog.showMessageBox({
-    type: 'info',
-    title: 'A new update is available for Magi!',
-    message: 'I\'ll automatically download it for you...'
-  })
-})
-
-autoUpdater.on('update-downloaded', () => {
-  dialog.showMessageBox({
-    type: 'info',
-    title: 'New update downloaded!',
-    message: 'The next time you start up Magi, I\'ll automatically install the update.'
-  })
-})
 
 app.setAppUserModelId(process.execPath); // For notifications
 
@@ -55,6 +30,7 @@ function createWindow () {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html')
+    autoUpdater.checkForUpdatesAndNotify()
   }
 
 
