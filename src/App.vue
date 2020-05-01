@@ -12,7 +12,7 @@
       <div style="display: flex; padding: 20px;">
         <span style="display: flex;">
           <span>
-            <img src="./assets/100px.png" style="width: 60px; height: 60px; cursor: pointer;" v-on:click="showMessageBox('Brought to you by Ben with love')">
+            <img src="./assets/100px.png" style="width: 60px; height: 60px; cursor: pointer;" v-on:click="showMessageBox('I hope I don\'t crash on you')">
           </span>
           <span style="margin-left:10px;">
             <h3 class="white-text">{{config.activeProfile.name}}</h3>
@@ -99,10 +99,7 @@ export default {
   data() {
     // Get changeLogs
     let changeLogs = [
-      "New, improved, and simpler job manager",
-      "Better search (up to date with Twitch itself!)",
-      "Easy import of Twitch profiles!",
-      "UI Improvements!"
+      "Smart download",
     ]
 
     let minecraftVersions;

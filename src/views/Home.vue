@@ -53,7 +53,11 @@ export default {
         'What\'s up, doc?', 
         'Care for a trip in the TARDIS?', 
         'Hello, Pond.', 
-        'MUDAMUDAMUDAMUDA!',
+        'Welcome to Magi!',
+        "How are things?",
+        "Wanna search for new mods?",
+        "Find something cool today!",
+        "Miss the outside world? Replicate it with mods inside Minecraft!",
         'Hi!',
         'What\'s up?',
         'I\'m running out of greetings.'
