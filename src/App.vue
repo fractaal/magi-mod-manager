@@ -42,15 +42,15 @@
     <div class="wrapper" style="overflow:hidden;">
       <div class="routerViewColor">
         <transition name="fade">
-          <!--<keep-alive>-->
+          <keep-alive>
             <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
                           :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
                           :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"
-                          :profiles="profiles" :config="this.config" :importStatus="importStatus" :appSettings="appSettings"/>
-          <!--</keep-alive>-->
+                          :profiles="profiles" :config="this.config" :importStatus="importStatus"/>
+          </keep-alive>
         </transition>
       </div>
-      <JobQueue :jobQueue="jobQueue" :maxActiveJobs="appSettings.maxActiveJobs" :activeJobs="activeJobs" :jobQueueIndex="jobQueueIndex"></JobQueue>
+      <JobQueue :jobQueue="jobQueue" :maxActiveJobs="maxActiveJobs" :activeJobs="activeJobs" :jobQueueIndex="jobQueueIndex"></JobQueue>
     </div>
   </div>
 </template>
@@ -78,8 +78,7 @@ const appSettingsTemplate = {
   activeProfile: 'Default',
   screenSizeX: '1366',
   screenSizeY: '768',
-  maxActiveJobs: 5,
-  smartDownload: true,
+  wasWelcomeScreenDisplayed: false,
 }
 
 const configTemplate = {
@@ -166,10 +165,6 @@ export default {
         type: 'separator',
       },
       {
-        label: "Settings...",
-        click: () => {this.$router.push("/Settings")}
-      },
-      {
         label: 'About',
         click: () => {this.$router.push('/Welcome')}
       }
@@ -198,6 +193,7 @@ export default {
       jobQueue: [],
       importStatus: '',
       jobQueueIndex: 0,
+      maxActiveJobs: 5,
       activeJobs: 0,
     }
   },
@@ -364,15 +360,6 @@ export default {
       })
     })
 
-    // Configure app settings event
-    this.$eventHub.$on("changeAppSettings", newSettings => {
-      for (let newSetting in newSettings) {
-        this.appSettings[newSetting] = newSettings[newSetting]
-      }
-      console.log("New settings: ", this.appSettings)
-      this.saveImportantToFile();
-    })
-
     // Watch currently active profile folder
     if (this.config.activeProfile.instanceDirectory) {
       this.startProfileFolderWatcher()
@@ -392,6 +379,7 @@ export default {
     
 
     this.jobQueueIndex = 0; // Job manager this.jobQueueIndex
+    this.maxActiveJobs = 5; 
     this.activeJobs = 0;
 
     let jobManager;
@@ -466,7 +454,7 @@ export default {
             // Check if it's available in smart download
             let smartDownloadFile = smartDownload.isAvailable(job.file_name);
 
-            if (smartDownloadFile && this.appSettings.smartDownload) {
+            if (smartDownloadFile) {
               console.log("Smart download available for " + job.file_name);
               try {
                 fs.copyFileSync(smartDownloadFile, path.normalize(this.config.activeProfile.instanceDirectory + '/mods' + job.file_name))
@@ -526,7 +514,7 @@ export default {
           }, 1) // (Spawn it after 1 ms)
         } 
         
-        if (this.activeJobs < this.appSettings.maxActiveJobs && this.jobQueueIndex < (this.jobQueue.length - 1)) {
+        if (this.activeJobs < this.maxActiveJobs && this.jobQueueIndex < (this.jobQueue.length - 1)) {
           console.log("Traversing up the job queue");
           this.jobQueueIndex++; 
         } else if ((this.jobQueueIndex + 1) >= this.jobQueue.length) {
@@ -924,7 +912,18 @@ export default {
     },
 
     readProfiles() {
-      return fs.readdirSync(path.normalize(AppPath + '/profiles')).map(value => {return path.basename(value, '.json')});
+      return fs.readdirSync(path.normalize(AppPath + '/profiles')).map(value => {
+        if (path.extname(value) === ".json") {
+          let file = JSON.parse(fs.readFileSync(path.normalize(`${AppPath}/profiles/${value}`)))
+          try {
+            return file.activeProfile.name;
+          } catch(error) {
+            console.warn("Error trying to access name of profile, are you sure this JSON is formatted right?");
+          }
+        } else {
+          console.warn("There shouldn't be any other files that aren't profile JSONs in this folder!");
+        }
+      });
     }
   },
 
