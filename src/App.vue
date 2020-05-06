@@ -382,6 +382,15 @@ export default {
     } else {
       console.warn("Profile list watcher already exists")
     };
+
+    // Change app settings
+    this.$eventHub.$on("changeAppSettings", newSettings => {
+      for (let value in newSettings) {
+        this.appSettings[value] = newSettings[value];
+      }
+      console.log("New settings: ", this.appSettings);
+      this.saveImportantToFile();
+    })
     
 
     this.jobQueueIndex = 0; // Job manager this.jobQueueIndex
