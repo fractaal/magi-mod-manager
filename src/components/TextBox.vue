@@ -1,6 +1,6 @@
 <template>
   <div>
-    <form v-on:submit.prevent="onSubmit(userInput, label)" style="display: flex; align-items: center;">
+    <form v-on:submit.prevent="onSubmit(userInput, label)" style="position: relative; display: flex; align-items: center;">
       <label :for="label">{{label}}</label>
       <input @input="onInput" @change="onChange" :id="label" v-model="userInput" style="height: 30px;" class="textinput" type="text" size="50" :placeholder="placeholder">
       <input class="searchButton" type="submit" hidden>
