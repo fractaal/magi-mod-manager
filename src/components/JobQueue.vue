@@ -21,7 +21,7 @@ export default {
   name: "JobQueue",
   props: {
     jobQueue: Array,
-    maxActiveJobs: Number,
+    maxActiveJobs: [Number, String],
     activeJobs: Number,
     jobQueueIndex: Number,
   },

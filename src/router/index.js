@@ -8,6 +8,7 @@ import ChangeProfile from '../views/ChangeProfile.vue'
 import WelcomeCard from '../components/WelcomeCard.vue'
 import ConfigureProfile from '../views/ConfigureProfile.vue'
 import ImportProfileLoadingScreen from '../views/ImportProfileLoadScreen.vue'
+import Settings from "../views/Settings.vue"
 
 Vue.use(VueRouter)
 
@@ -51,6 +52,11 @@ Vue.use(VueRouter)
     path: '/ImportProfileLoadingScreen',
     name: 'Import Profile...',
     component: ImportProfileLoadingScreen
+  },
+  {
+    path: "/Settings",
+    name: "Settings",
+    component: Settings,
   }
 ]
 

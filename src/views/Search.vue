@@ -53,7 +53,7 @@
 import SearchDropdownList from '@/components/SearchDropdownList.vue'
 
 export default {
-  name: 'Home',
+  name: 'Search',
   props: {
     modSearchResults: Array,
     modSearchTerm: String,

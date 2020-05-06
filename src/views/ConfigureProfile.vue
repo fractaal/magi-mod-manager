@@ -32,7 +32,7 @@
   import DirectoryChooser from '../components/DirectoryChooser'
 
   export default {
-    name: 'NewProfile',
+    name: 'ConfigureProfile',
     components: {
       TextBox,
       DropdownList,
