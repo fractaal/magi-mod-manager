@@ -46,7 +46,7 @@
             <router-view  :mods="config.activeProfile.mods" :modSearchResults="modSearchResults" :modDetails="modDetails" 
                           :appVersion="appVersion" :changeLogs="changeLogs" :modSearchTerm="modSearchTerm" :activeProfileVersion="this.config.activeProfile.version"
                           :refinedSearchFiltersTemplate="refinedSearchFiltersTemplate" :noResultFound="noResultFound" :refinedSearchFilters="refinedSearchFilters"
-                          :profiles="profiles" :config="this.config" :importStatus="importStatus"/>
+                          :profiles="profiles" :config="this.config" :importStatus="importStatus" :appSettings="appSettings"/>
           </keep-alive>
         </transition>
       </div>
@@ -100,6 +100,8 @@ export default {
     // Get changeLogs
     let changeLogs = [
       "Smart download",
+      "Bugfixes",
+      "Settings menu",
     ]
 
     let minecraftVersions;
@@ -163,6 +165,10 @@ export default {
       },
       {
         type: 'separator',
+      },
+      {
+        label: "Settings",
+        click: () => {this.$router.push("/Settings")}
       },
       {
         label: 'About',
