@@ -1,5 +1,11 @@
 # Magi 
 
+## A better, newer version of Magi might be released soon!
+
+- Complete rewrite. The code in Magi is horrible, and should never be touched, or ran, on any system ever again. 
+- This means better performance, more reliable features, and just a greater Magi.
+- Better UI/UX. I wouldn't say a complete overhaul, but just better overall UI/UX.
+
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/d0a20cc5f3c1458585d522960c80238a)](https://www.codacy.com/manual/fractaal/magi-mod-manager?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fractaal/magi-mod-manager&amp;utm_campaign=Badge_Grade)
 
 ## Features may break or not work at all
