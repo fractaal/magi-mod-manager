@@ -1,32 +1,29 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
+  <div>
     <router-view/>
   </div>
 </template>
 
+<script lang="ts">
+import Vue from 'vue';
+import Magi from './magi';
+
+const _magi = new Magi();
+
+export default Vue.extend({
+  name: "App",
+  data() {
+    return {
+      magi: _magi,
+    }
+  },
+})
+</script>
+
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
-
-#nav {
-  padding: 30px;
-}
-
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
+* {
+  font-family: 'Product Sans' !important;
+  font-size: 110%;
+  font-weight: 900;
 }
 </style>
