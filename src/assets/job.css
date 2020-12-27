@@ -1,0 +1,56 @@
+.job {
+  margin: 10px 0px;
+}
+
+.upper-job {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255,255,255,0.1);
+  border-radius: 7px 7px 0px 0px;
+}
+
+.middle-job {
+  height: 10px;
+}
+
+.progress-bar {
+  transition: all 0.25s;
+  height: 10px;
+  background-color: rgba(255,255,255,0.75);
+}
+
+.progress-bar.complete {
+  background-color: rgba(131, 218, 157, 0.75);
+}
+
+.progress-bar.error {
+  background-color: rgba(194, 154, 154, 0.75);
+  animation: shimmer 3s infinite;
+}
+
+.progress-bar.running {
+  animation: shimmer 0.75s infinite;
+}
+
+.lower-job {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255,255,255,0.1);
+  border-radius: 0px 0px 7px 7px;
+}
+
+@keyframes shimmer {
+  0% {
+    filter: opacity(1);
+  }
+
+  50% {
+    filter: opacity(0.5) brightness(0.8);
+  }
+
+  100% {
+    filter: opacity(1);
+  }
+}

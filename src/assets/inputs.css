@@ -1,0 +1,29 @@
+.round-button {
+  transition: all 0.25s;
+  font-size: 105%;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  outline: none;
+  border: none;
+  background-color: rgba(255,255,255,0);
+}
+
+.round-button:hover {
+  background-color: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.window-button {
+  transition: all 0.25s;
+  -webkit-app-region: no-drag;
+  outline: none;
+  border: none;
+  background-color: rgba(255,255,255,0);
+  padding: 0 20px;
+}
+
+.window-button:hover {
+  background-color: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
