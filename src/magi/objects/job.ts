@@ -24,6 +24,10 @@ export default class Job {
 
   async start(magiInstance: Magi) {
     try {
+      this.status = "";
+      this.progress = 0;
+      this.isComplete = false;
+      this.isFailed = false;
       this.isRunning = true;
       await this.action(magiInstance);
 
