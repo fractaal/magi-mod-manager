@@ -20,14 +20,19 @@
           <p>{{profileString}}</p>
 
         </div>
-        <magi-button icon="home" size="lg"/>
-        <magi-button icon="search" size="lg"/>
+        <magi-button icon="home" size="lg" @click="$router.push('/home')"/>
+        <magi-button icon="search" size="lg" @click="$router.push('/search')"/>
+        <form @submit="$router.push('/search')">
+          <input v-model="search" type="text" placeholder="Search for mods..."/>
+        </form>
       </div>
     </div>
     <modal name="main">{{modalText}}</modal>
     <div class="app">
       <div class="view">
-        <router-view/>
+        <transition name="list" mode="out-in">
+          <router-view/>
+        </transition>
       </div>
       <div class="sidebar">
         <h1>DOWNLOADS</h1>
@@ -41,6 +46,7 @@
             :running="job.isRunning"
             :complete="job.isComplete"
             :failed="job.isFailed"
+            @restart="() => {job.start(shared.magi)}"
           />
         </transition-group>
       </div>
@@ -65,6 +71,7 @@ export default Vue.extend({
     return {
       shared,
       modalText: "",
+      search: "",
     }
   },
   created() {
@@ -88,6 +95,26 @@ export default Vue.extend({
     },
     close() {
       BrowserWindow.getFocusedWindow()?.close();
+    }
+  },
+  watch: {
+    search: function() {
+      if (this.$route.name == "Search") {
+        if (this.shared.search.timer) {
+          clearTimeout(this.shared.search.timer);
+          this.shared.search.isDoneTyping = false;
+          this.shared.search.timer = null;
+        }
+
+        this.shared.search.timer = setTimeout(() => {
+          this.shared.search.isDoneTyping = true;
+          this.shared.magi.search({
+            gameVersion: this.shared.magi.profileManager.activeProfile.gameVersion,
+            searchFilter: this.search,
+            pageSize: 20,
+          })
+        }, 650)
+      }
     }
   }
 })
