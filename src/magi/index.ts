@@ -2,6 +2,8 @@
 import {remote} from 'electron';
 import curseforge from 'mc-curseforge-api';
 import { promiseTimeout } from './util';
+import fs from 'fs';
+import path from 'path';
 
 // Classes
 import Profile from './objects/profile';
@@ -11,6 +13,7 @@ import JobManager from './job-manager';
 import { Options } from '../interfaces';
 import Job from './objects/job';
 import ProfileManager from './profile-manager';
+import MagiModFile from './objects/magi-mod-file';
 
 
 /**
@@ -24,7 +27,7 @@ export default class Magi {
   searchResults: Mod[] = [];
 
   // Internal job manager
-  jobManager = new JobManager(this, 500); 
+  jobManager = new JobManager(this, 2500); 
 
   // Profile manager
   profileManager = new ProfileManager();
@@ -35,10 +38,20 @@ export default class Magi {
   };
 
   // Public functions for view layer to bind to
-  search = async (options: Options) => {this.searchResults = await curseforge.getMods(options)};
+  search = async (options: Options) => {
+    this.searchResults = [];
+    this.searchResults = await curseforge.getMods(options)
+  };
 
   download = async (identifier: number, isDependency?: boolean) => {
     const mod = await curseforge.getMod(identifier);
+
+    if (this.profileManager.activeProfile.path === "") {
+      if (this.profileManager.activeProfile.setProfilePath() === null) {
+        remote.dialog.showErrorBox(`Download can't proceed`, `${mod.name} can't be downloaded because you didn't set a path.`);
+        return;
+      }
+    }
 
     let latestFileForVersion: ModFile;
 
@@ -66,14 +79,26 @@ export default class Magi {
   // Private functions
   private sendDownloadToJobManager = (mod: Mod, file: ModFile, isDependency?: boolean) => {
     console.log(`[magi] Sending download ${mod.name} to job manager`);
-    this.jobManager.addJob(new Job(mod.name, isDependency ? `Dependency` : `User-initiated`, `DOWNLOAD`, async function (this: Job) {
+    this.jobManager.addJob(new Job(mod.name, isDependency ? `Dependency` : `User-initiated`, `DOWNLOAD`, async function (this: Job, magi: Magi) {
       for (let i = 0; i < 100; i++) {
-        await new Promise(r => setTimeout(r, Math.random() * 100));
+        await new Promise(r => setTimeout(r, Math.random() * 25));
         this.progress = i;
-        if ((Math.random() * 100).toFixed() == "80") {
-          throw new Error("Connection refused");
-        }
       }
+      
+      fs.writeFileSync(path.join(magi.profileManager.activeProfile.path, path.basename(file.download_url)), "dummy");
+
+      magi.profileManager.activeProfile.addFile(
+        new MagiModFile({
+          name: mod.name,
+          summary: mod.summary,
+          pictureUrl: mod.logo.thumbnailUrl,
+          active: true,
+          downloadUrl: file.download_url,
+          filePath: magi.profileManager.activeProfile.path,
+          id: mod.id,
+        })
+      )
+
     }));
   }
 }
