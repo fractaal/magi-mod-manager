@@ -25,6 +25,10 @@ declare class ModFile {
   timestamp: Date;
   mod_dependencies: string[];
   available: boolean;
+
+  download(path: string, override? = false, simulate? = false, callback: Function, url = this.download_url, tries? = 10): Promise<string>;
+  getDependencies(callback?: Function): Promise<Mod[]>;
+  getDependenciesFiles(callback?: Function): Promise<ModFile[]>;
 }
 
 declare class Mod {
@@ -111,7 +115,7 @@ declare module 'mc-curseforge-api' {
    * @description Get information about a specific mod using the identifier.
    * @returns {Promise.<Mod, Error>} A promise containing the json object returned by the Curse API on successful 200 response.
    */
-  export function getMod(identifier: number): Promise<Mod|Error>;
+  export function getMod(identifier: number): Promise<Mod>;
 
   /**
    * @function getModFiles
@@ -121,7 +125,7 @@ declare module 'mc-curseforge-api' {
    * @param {function} callback - Optional callback to use instead of Promise.
    * @returns {Promise.<ModFile[], Error>} A promise containing the json object returned by the Curse API on successful 200 response.
    */
-  export function getModFiles(identifier: number): Promise<ModFile[]|Error>;
+  export function getModFiles(identifier: number): Promise<ModFile[]>;
 
   /**
    * @function getModDescription
@@ -131,6 +135,6 @@ declare module 'mc-curseforge-api' {
    * @param {function} callback - Optional callback to use instead of Promise.
    * @returns {Promise.<string, Error>} A promise containing the html string returned by the Curse API on successful 200 response.
    */
-  export function getModDescription(identifier: number): Promise<string|Error>;
+  export function getModDescription(identifier: number): Promise<string>;
 
 }
