@@ -4,7 +4,7 @@ export default class Profile {
   mods: Mod[];
   path: string;
 
-  constructor(options: {name: string, gameVersion: string, mods?: Mod[], path: string}) {
+  constructor(options: {name: string; gameVersion: string; mods?: Mod[]; path: string}) {
     this.name = options.name;
     this.gameVersion = options.gameVersion;
     this.mods = options.mods || [];

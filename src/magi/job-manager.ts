@@ -1,3 +1,4 @@
+import Magi from ".";
 import Job from "./objects/job";
 
 export default class JobManager {
@@ -10,7 +11,7 @@ export default class JobManager {
    * @description Creates new job manager.
    * @param updateRate ms in which JobManager performs a management pass on the queue.
    */
-  constructor(updateRate?: number) {
+  constructor(magi: Magi, updateRate?: number) {
     setInterval(() => {
       this.activeJobs = this.jobs.reduce((acc, val) => val.isRunning ? ++acc : acc, 0);
 
@@ -20,7 +21,7 @@ export default class JobManager {
         
         for (let i = 0; i < room; i++) {
           if (available[i]) {
-            available[i].start();
+            available[i].start(magi);
           }
         }
       }

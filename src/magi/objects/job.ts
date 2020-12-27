@@ -1,3 +1,5 @@
+import Magi from "..";
+
 export default class Job {
   type: string;
   action: Function;
@@ -20,10 +22,10 @@ export default class Job {
     this.subtitle = subtitle;
   }
 
-  async start() {
+  async start(magiInstance: Magi) {
     try {
       this.isRunning = true;
-      await this.action();
+      await this.action(magiInstance);
 
       this.status = `Complete`;
       this.progress = 100;
@@ -37,7 +39,7 @@ export default class Job {
       this.isRunning = false;
 
       this.status = `Critical - ${err.message}`
-      this.progress = 0;
+      this.progress = 100;
     }
   }
 }
