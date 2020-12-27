@@ -14,6 +14,7 @@ export default class JobManager {
   constructor(magi: Magi, updateRate?: number) {
     setInterval(() => {
       this.activeJobs = this.jobs.reduce((acc, val) => val.isRunning ? ++acc : acc, 0);
+      this.jobs = this.jobs.filter(job => (!job.isComplete));
 
       if (this.activeJobs < this.maxActiveJobs) {
         const room = this.maxActiveJobs - this.activeJobs;
