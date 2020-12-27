@@ -9,13 +9,17 @@
     </div>
     <div class="lower-job">
       <p>{{progress}}% - {{status}}</p>
+      <magi-button v-if="failed" icon="redo-alt" size="1x" @click="$emit('restart')"/>
     </div>
   </div>
 </template>
 
 <script>
+import MagiButton from './MagiButton.vue';
+
 export default {
   name: "Job",
+  components: {MagiButton},
   data() {
     return {};
   },
