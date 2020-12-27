@@ -3,6 +3,12 @@
 @import url('./job.css');
 @import url('./animation.css');
 @import url('./inputs.css');
+@import url('./placeholders.css');
+@import url('./list.css');
+
+:root {
+  --top-bar-height: 125px;
+}
 
 * {
   margin: 0;
@@ -10,7 +16,6 @@
   color: white;
   font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: 300;
-  line-height: 100%;
 }
 
 .title-bar {
@@ -28,11 +33,11 @@
 .top-bar>.top-bar-content {
   background: linear-gradient(90deg, rgba(255, 95, 136, 1) 0%, rgba(255, 201, 125, 1) 100%);
   width: 100vw;
-  height: 100px;
+  height: var(--top-bar-height);
   position: fixed;
   display: flex;
   align-items: center;
-  padding: 0px 10px;
+  padding: 0px 30px;
 }
 
 .top-bar>.top-bar-content>* {
@@ -47,15 +52,15 @@
   position: fixed;
   display: grid;
   grid-template-columns: 8fr 25vw;
-  height: calc(100vh - 100px);
+  height: calc(100vh - var(--top-bar-height));
   width: 100vw;
-  top: 100px;
+  top: var(--top-bar-height);
 }
 
 .sidebar {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - var(--top-bar-height));
   overflow-y: auto;
   position: relative;
   background-color: #393968;
@@ -63,13 +68,27 @@
 }
 
 .view {
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - var(--top-bar-height));
   overflow-y: auto;
   position: relative;
   background-color: #2a2a5c;
+
+  padding: 40px 50px;
 }
 
 .vm--modal {
   padding: 10px;
   color: black;
+}
+
+.row {
+  display: flex;
+}
+
+.row>* {
+  margin: 0 10px;
+}
+
+.disabled {
+  filter: saturate(0.7) brightness(0.5);
 }

@@ -6,12 +6,12 @@
   position: absolute;
 }
 .list-enter {
-  transform: scale(1) translateY(-200px);
+  transform: scale(0.75);
   opacity: 0;
 }
 
 .list-leave-to {
-  transform: scale(1) translateY(200px);
+  transform: scale(0.75);
   opacity: 0;
 }
 

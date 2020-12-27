@@ -6,12 +6,17 @@
   border-radius: 50%;
   outline: none;
   border: none;
-  background-color: rgba(255,255,255,0);
+  background-color: rgba(0,0,0,0);
 }
 
 .round-button:hover {
-  background-color: rgba(255,255,255,0.3);
+  background-color: rgba(0,0,0,0.3);
   transform: scale(1.1);
+}
+
+.round-button:active {
+  background-color: rgba(0,0,0,0);
+  transform: scale(0.8);
 }
 
 .window-button {
@@ -19,11 +24,31 @@
   -webkit-app-region: no-drag;
   outline: none;
   border: none;
-  background-color: rgba(255,255,255,0);
+  background-color: rgba(0,0,0,0);
   padding: 0 20px;
 }
 
 .window-button:hover {
-  background-color: rgba(255,255,255,0.3);
+  background-color: rgba(0,0,0,0.3);
   transform: scale(1.1);
+}
+
+.window-button:active {
+  background-color: rgba(0,0,0,0);
+  transform: scale(0.8);
+}
+
+input {
+  background-color: rgba(0,0,0,0.3);
+  outline: none;
+  border: none;
+  padding: 15px 30px; 
+  border-radius: 15px;
+  font-size: 1.25em;
+  width: 25vw;
+}
+
+::placeholder {
+  color: white;
+  opacity: 0.25;
 }

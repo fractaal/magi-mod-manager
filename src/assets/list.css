@@ -1,0 +1,29 @@
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.list>.list-item {
+  margin: 10px 0;
+}
+
+.list-item {
+  transition: filter 0.5s;
+  padding: 25px;
+  background-color: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  height: 125px;
+}
+
+.list-item>* {
+  padding: 0 10px;
+}
+
+.mod-logo {
+  width: 125px;
+  height: auto !important;
+  border-radius: 10px;
+}

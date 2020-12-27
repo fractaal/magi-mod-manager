@@ -1,0 +1,4 @@
+.vue-content-placeholders-img,
+.vue-content-placeholders-text__line {
+    background-color: red !important;
+}
