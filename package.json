@@ -23,7 +23,7 @@
     "electron-log": "^4.1.1",
     "electron-updater": "^4.2.5",
     "filesize": "^6.1.0",
-    "follow-redirects": "^1.11.0",
+    "follow-redirects": "^1.14.8",
     "javascript-time-ago": "^2.0.7",
     "mc-curseforge-api": "^2.1.0",
     "sync-request": "^6.1.0",
